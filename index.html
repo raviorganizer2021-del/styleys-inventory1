@@ -290,8 +290,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="fg"><label>Name *</label><input id="fm-name"/></div>
       <div class="fg"><label>Category</label>
         <select id="fm-cat">
-          <option>Fabric</option><option>Accessories</option><option>Packaging</option>
-          <option>Finished Goods</option><option>Raw Material</option><option>Other</option>
+          ${CATS.map(c=>`<option>${c}</option>`).join('')}
         </select>
       </div>
       <div class="fg"><label>Unit</label>
@@ -373,6 +372,8 @@ async function checkDbSchema(){
 }
 
 function loadSettings(){
+  const savedCats=localStorage.getItem('categories');
+  if(savedCats) CATS=JSON.parse(savedCats);
   settings.company_name = localStorage.getItem('company_name') || settings.company_name;
   settings.company_address = localStorage.getItem('company_address') || settings.company_address;
   settings.company_gst = localStorage.getItem('company_gst') || settings.company_gst;
@@ -442,8 +443,8 @@ function renderDashboard(){
   <div class="page-title">Dashboard <span style="font-size:13px;color:#aaa;font-weight:400">Welcome back, Styleys India LLP</span></div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Total SKUs</div><div class="metric-value purple">${items.length}</div><div class="metric-sub">Active products</div></div>
-    <div class="metric"><div class="metric-label">Low Stock</div><div class="metric-value red">${low.length}</div><div class="metric-sub">Need reorder</div></div>
-    <div class="metric"><div class="metric-label">Out of Stock</div><div class="metric-value orange">${out.length}</div><div class="metric-sub">Zero quantity</div></div>
+    <div class="metric" style="cursor:pointer" onclick="filterInventoryAndNavigate('low')"><div class="metric-label">Low Stock</div><div class="metric-value red">${low.length}</div><div class="metric-sub">Need reorder</div></div>
+    <div class="metric" style="cursor:pointer" onclick="filterInventoryAndNavigate('out')"><div class="metric-label">Out of Stock</div><div class="metric-value orange">${out.length}</div><div class="metric-sub">Zero quantity</div></div>
     <div class="metric"><div class="metric-label">Inventory Value</div><div class="metric-value green">₹${Math.round(totalVal).toLocaleString('en-IN')}</div><div class="metric-sub">At cost price</div></div>
     <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value purple">₹${Math.round(totalSales).toLocaleString('en-IN')}</div><div class="metric-sub">${sales.length} orders</div></div>
     <div class="metric"><div class="metric-label">Pending Payment</div><div class="metric-value orange">${pending}</div><div class="metric-sub">Orders unpaid</div></div>
@@ -471,7 +472,11 @@ function renderDashboard(){
 function renderInventoryPage(){
   document.getElementById('pg-inventory').innerHTML=`
   <div class="page-title">Inventory
-    <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
+      <button class="btn btn-secondary" onclick="openCategoryModal()">+ Add Category</button>
+      <button class="btn btn-secondary" onclick="autoCalcThreshold()">📊 Auto Threshold (30-day)</button>
+    </div>
   </div>
   <div class="search-row">
     <input class="search-input" id="inv-q" placeholder="🔍 Search by code, name, SKU, category..." oninput="filterInv()"/>
@@ -531,6 +536,57 @@ function filterInv(){
       </div>
     </td>
   </tr>`).join('');
+}
+
+function filterInventoryAndNavigate(status){
+  document.getElementById('inv-status').value=status;
+  filterInv();
+  const navItem=document.querySelector('[onclick*="renderPage(2)"]');
+  if(navItem) navItem.click();
+  else {
+    Array.from(document.querySelectorAll('[onclick*="renderPage"]')).forEach(el=>el.classList.remove('nav-active'));
+    document.getElementById('pg-dashboard').style.display='none';
+    document.getElementById('pg-inventory').style.display='block';
+    document.querySelectorAll('[onclick*="renderPage(2)"]')[0]?.classList.add('nav-active');
+  }
+}
+
+function openCategoryModal(){
+  const newCat=prompt('Naya category naam enter karo:');
+  if(newCat && newCat.trim()){
+    const cat=newCat.trim();
+    if(!CATS.includes(cat)){
+      CATS.push(cat);
+      localStorage.setItem('categories', JSON.stringify(CATS));
+      renderInventoryPage();
+      alert(`✅ Category "${cat}" add ho gaya!`);
+    } else {
+      alert('Ye category pehle se hai!');
+    }
+  }
+}
+
+async function autoCalcThreshold(){
+  const thirtyDaysAgo=new Date(Date.now()-30*86400000);
+  const last30Sales=sales.filter(s=>new Date(s.date)>=thirtyDaysAgo);
+  const itemUsage={};
+  
+  for(const sale of last30Sales){
+    for(const item of (sale.sale_items||[])){
+      const itemId=item.item_id;
+      itemUsage[itemId]=(itemUsage[itemId]||0)+item.qty;
+    }
+  }
+  
+  let updated=0;
+  for(const item of items){
+    const dailyUsage=itemUsage[item.id]?itemUsage[item.id]/30:2;
+    const newThreshold=Math.max(Math.ceil(dailyUsage*15), 5);
+    await sb.from('items').update({threshold:newThreshold}).eq('id',item.id);
+    updated++;
+  }
+  alert(`✅ ${updated} items ka threshold auto calculate ho gaya (15-day buffer)!`);
+  await loadAll();
 }
 
 function openItemModal(id){
