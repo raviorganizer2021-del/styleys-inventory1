@@ -1190,8 +1190,28 @@ async function submitChallan(){
   const err=document.getElementById('challan-err');
   err.textContent='';
   if(!cust){err.textContent='Party name zaroori hai.';return;}
-  const rows=challanRows.filter(r=>r.itemId&&r.qty>0);
-  if(!rows.length){err.textContent='Kam se kam ek item select karo.';return;}
+  const normalizedRows = [];
+  for(const r of challanRows){
+    const row={...r,qty:Number(r.qty)||0};
+    if(!row.itemId && row.itemName){
+      const found=items.find(i=>
+        i.id===row.itemId ||
+        (i.name||'').toLowerCase()===row.itemName.toLowerCase() ||
+        (i.sku||'').toLowerCase()===row.itemName.toLowerCase() ||
+        (i.item_code||'').toLowerCase()===row.itemName.toLowerCase()
+      );
+      if(found){
+        row.itemId=found.id;
+        row.itemName=found.name;
+        row.unit=found.set_size>1?'sets':found.unit;
+      }
+    }
+    if(row.itemId&&row.qty>0){
+      normalizedRows.push(row);
+    }
+  }
+  const rows=normalizedRows;
+  if(!rows.length){err.textContent='Kam se kam ek valid item select karo (dropdown se select karo).';return;}
   const challanNo='CHN-'+String(Date.now()).slice(-6);
   const color=document.getElementById('cc-color').value.trim();
   const createdBy=document.getElementById('cc-created-by').value.trim()||settings.operator;
