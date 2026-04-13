@@ -12,16 +12,12 @@ body{font-family:Arial,sans-serif;background:#f0eef8;color:#222;min-height:100vh
 a{color:inherit;text-decoration:none}
 button{cursor:pointer;font-family:inherit}
 input,select,textarea{font-family:inherit}
-
-/* HEADER */
 .hdr{background:linear-gradient(135deg,#6c3fc5,#9b59b6);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;box-shadow:0 2px 8px rgba(108,63,197,0.3)}
 .hdr-logo{color:#fff;font-weight:800;font-size:22px;letter-spacing:2px}
 .hdr-sub{color:rgba(255,255,255,0.75);font-size:11px;margin-left:8px}
 .hdr-right{display:flex;align-items:center;gap:10px}
 .hdr-user{color:rgba(255,255,255,0.85);font-size:12px}
 .btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:4px 12px;border-radius:5px;font-size:12px}
-
-/* SIDEBAR + LAYOUT */
 .layout{display:flex;min-height:calc(100vh - 56px)}
 .sidebar{width:200px;background:#fff;border-right:1px solid #e8e0f5;flex-shrink:0;padding:16px 0}
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;color:#666;cursor:pointer;border-left:3px solid transparent;transition:all 0.15s}
@@ -29,8 +25,6 @@ input,select,textarea{font-family:inherit}
 .nav-item.active{background:#f0eaf9;color:#6c3fc5;font-weight:600;border-left:3px solid #6c3fc5}
 .nav-icon{font-size:16px;width:20px;text-align:center}
 .main{flex:1;padding:24px;overflow-x:hidden}
-
-/* CARDS & METRICS */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
 .metric{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
 .metric-label{font-size:11px;color:#999;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
@@ -40,121 +34,77 @@ input,select,textarea{font-family:inherit}
 .metric-value.green{color:#27ae60}
 .metric-value.orange{color:#e67e22}
 .metric-sub{font-size:11px;color:#aaa;margin-top:3px}
-
-/* PAGE TITLE */
 .page-title{font-size:18px;font-weight:700;color:#333;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
-
-/* CARD */
 .card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);margin-bottom:20px}
 .card-title{font-size:14px;font-weight:700;color:#444;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid #f0f0f0}
-
-/* TABLE */
 .tbl-wrap{overflow-x:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{padding:11px 13px;text-align:left;font-weight:600;color:#888;background:#fafafa;white-space:nowrap;border-bottom:1px solid #f0f0f0}
 td{padding:10px 13px;border-bottom:1px solid #f7f7f7;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#fdf9ff}
-
-/* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
 .fg label{display:block;font-size:11px;color:#888;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
 .fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;color:#222;font-size:13px;transition:border 0.15s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#6c3fc5;background:#fff}
-
-/* BUTTONS */
+.fg input:focus,.fg select:focus{outline:none;border-color:#6c3fc5;background:#fff}
 .btn{padding:8px 18px;border-radius:7px;border:none;font-size:13px;font-weight:600;transition:all 0.15s}
 .btn-primary{background:#6c3fc5;color:#fff}
 .btn-primary:hover{background:#5a32a3}
 .btn-success{background:#27ae60;color:#fff}
 .btn-success:hover{background:#219a52}
 .btn-danger{background:#fdecea;color:#c0392b;border:1px solid #f5c6c6}
-.btn-danger:hover{background:#f9d0ce}
 .btn-secondary{background:#f5f0ff;color:#6c3fc5;border:1px solid #d4c5f0}
-.btn-secondary:hover{background:#ede5ff}
 .btn-sm{padding:4px 10px;font-size:11px;border-radius:5px}
 .btn-outline{background:#fff;color:#6c3fc5;border:1.5px solid #6c3fc5}
-.btn-outline:hover{background:#f5f0ff}
 .btn-print{background:#6c3fc5;color:#fff;padding:5px 14px;border-radius:5px;border:none;font-size:12px;font-weight:600}
 .btn-challan{background:#1abc9c;color:#fff;padding:5px 14px;border-radius:5px;border:none;font-size:12px;font-weight:600}
-
-/* SEARCH BOX */
 .search-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
 .search-input{flex:1;min-width:200px;padding:9px 14px;border-radius:8px;border:1.5px solid #e0d8f0;background:#fff;font-size:13px}
 .search-input:focus{outline:none;border-color:#6c3fc5}
-
-/* BADGES */
 .badge{padding:3px 9px;border-radius:12px;font-size:11px;font-weight:600}
 .badge-ok{background:#e8f8ef;color:#1e8449}
 .badge-low{background:#fdecea;color:#c0392b}
 .badge-out{background:#fdf2e9;color:#d35400}
 .badge-paid{background:#e8f8ef;color:#1e8449}
 .badge-pending{background:#fdf2e9;color:#d35400}
-
-/* ALERT */
 .alert{border-radius:8px;padding:12px 16px;margin-bottom:18px;font-size:13px}
 .alert-danger{background:#fdecea;border-left:4px solid #e74c3c;color:#922b21}
 .alert-success{background:#e9f7ef;border-left:4px solid #27ae60;color:#1a6636}
 .alert-info{background:#eaf4fb;border-left:4px solid #2980b9;color:#1a5276}
-
-/* ITEM SEARCH DROPDOWN */
 .search-dropdown-wrap{position:relative}
 .item-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #6c3fc5;border-radius:7px;z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(108,63,197,0.15)}
 .item-dropdown-row{padding:9px 13px;cursor:pointer;font-size:13px;border-bottom:1px solid #f5f0ff}
 .item-dropdown-row:hover{background:#f0eaf9;color:#6c3fc5}
 .item-dropdown-row .item-sku{font-size:11px;color:#aaa;margin-left:6px}
 .item-dropdown-row .item-stock{float:right;font-size:11px;color:#888}
-
-/* SALE/CHALLAN ROWS */
-.order-row{display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:8px;align-items:end}
-.order-row-header{display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:4px}
-.order-row-header span{font-size:11px;color:#888;font-weight:600;text-transform:uppercase}
-
-/* ORDER CARD */
 .order-card{background:#fff;border-radius:10px;padding:15px 18px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.07);border-left:4px solid #6c3fc5}
 .order-card.challan{border-left-color:#1abc9c}
 .order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-
-/* BULK UPLOAD */
 .upload-zone{border:2.5px dashed #c5b3e8;border-radius:10px;padding:36px;text-align:center;color:#9b8abf;background:#faf8ff;cursor:pointer;transition:all 0.2s}
 .upload-zone:hover,.upload-zone.drag{border-color:#6c3fc5;background:#f0eaf9;color:#6c3fc5}
 .upload-zone .upload-icon{font-size:36px;margin-bottom:10px}
 .upload-zone p{font-size:14px;font-weight:600}
 .upload-zone small{font-size:12px;color:#bbb}
-
-/* AI */
 .ai-insight-box{background:linear-gradient(135deg,#f8f5ff,#fff);border:1.5px solid #d4c5f0;border-radius:10px;padding:20px}
 .ai-insight-text{font-size:13px;line-height:1.9;color:#333;white-space:pre-wrap;margin-top:14px}
 .ai-thinking{display:flex;align-items:center;gap:10px;color:#6c3fc5;font-size:13px;margin-top:14px}
 .spinner{width:18px;height:18px;border:2px solid #d4c5f0;border-top:2px solid #6c3fc5;border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* BAR CHART */
 .bar-wrap{margin-bottom:10px}
 .bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;color:#666}
 .bar-track{height:7px;background:#f0ecfa;border-radius:4px}
 .bar-fill{height:7px;background:linear-gradient(90deg,#6c3fc5,#9b59b6);border-radius:4px;transition:width 0.5s}
-
-/* SETUP */
 .setup-wrap{max-width:560px;margin:50px auto;background:#fff;border-radius:14px;padding:36px;box-shadow:0 4px 24px rgba(108,63,197,0.12)}
 .setup-logo{text-align:center;margin-bottom:24px}
 .setup-logo span{background:linear-gradient(135deg,#6c3fc5,#9b59b6);color:#fff;font-weight:800;font-size:28px;letter-spacing:2px;padding:8px 20px;border-radius:8px}
-.setup-wrap h2{font-size:18px;color:#333;margin-bottom:8px;text-align:center}
-.setup-wrap p{font-size:13px;color:#888;margin-bottom:20px;text-align:center;line-height:1.6}
 .sql-block{background:#1e1e2e;color:#a6e3a1;font-size:11px;padding:14px;border-radius:8px;overflow-x:auto;line-height:1.8;white-space:pre;margin:10px 0}
 .step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#6c3fc5;color:#fff;border-radius:50%;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0}
 .step-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:10px;font-size:13px;color:#555;line-height:1.6}
-
-/* PRINT */
 .print-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center}
 .print-box{background:#fff;color:#111;width:650px;max-height:92vh;overflow-y:auto;border-radius:12px;padding:40px 44px;font-family:Arial,sans-serif}
-
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center}
 .modal-box{background:#fff;border-radius:12px;padding:24px;width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:16px;color:#333}
-
 @media print{
   body>*:not(.print-overlay){display:none!important}
   .print-overlay{position:static!important;background:none!important}
@@ -165,60 +115,76 @@ tr:hover td{background:#fdf9ff}
 </head>
 <body>
 
-<!-- SETUP -->
 <div id="setup-screen" style="display:none;padding:20px">
   <div class="setup-wrap">
     <div class="setup-logo"><span>STYLEYS</span></div>
     <h2>Supabase Setup</h2>
-    <p>Pehli baar setup karo — sirf ek baar karna hai, phir hamesha kaam karega.</p>
-
+    <p>Pehli baar setup karo — sirf ek baar karna hai.</p>
     <div style="margin-bottom:16px">
-      <div class="step-row"><span class="step-num">1</span><span><a href="https://supabase.com" target="_blank" style="color:#6c3fc5">supabase.com</a> pe free account banao → New Project banao</span></div>
+      <div class="step-row"><span class="step-num">1</span><span><a href="https://supabase.com" target="_blank" style="color:#6c3fc5">supabase.com</a> pe free account banao</span></div>
       <div class="step-row"><span class="step-num">2</span><span>SQL Editor mein neeche diya SQL run karo</span></div>
       <div class="step-row"><span class="step-num">3</span><span>Settings → API se URL aur Anon Key copy karo</span></div>
     </div>
-
-    <div class="sql-block">CREATE TABLE items (
-  id bigserial primary key, sku text, name text,
-  category text, qty numeric default 0,
-  threshold numeric default 10, unit text default 'pcs',
-  price numeric default 0, hsn text, location text,
+    <div class="sql-block">-- Run this FULL SQL in Supabase SQL Editor
+CREATE TABLE IF NOT EXISTS items (
+  id bigserial primary key, sku text, item_code text, name text,
+  category text, qty numeric default 0, threshold numeric default 10,
+  unit text default 'pcs', price numeric default 0,
+  hsn text, location text, set_size numeric default 1,
   monthly_sales text default '{}',
   created_at timestamptz default now()
 );
-CREATE TABLE sales (
+CREATE TABLE IF NOT EXISTS sales (
   id bigserial primary key, order_no text, customer text,
   customer_gstin text, sale_date date, subtotal numeric,
   gst_rate numeric default 5, gst numeric, total numeric,
   payment_status text default 'Pending',
+  color text default '', created_by text default '',
   created_at timestamptz default now()
 );
-CREATE TABLE sale_items (
-  id bigserial primary key, sale_id bigint references sales(id) on delete cascade,
+CREATE TABLE IF NOT EXISTS sale_items (
+  id bigserial primary key,
+  sale_id bigint references sales(id) on delete cascade,
   item_id bigint, item_name text, sku text,
   qty numeric, price numeric, unit text, amount numeric
 );
-CREATE TABLE challans (
+CREATE TABLE IF NOT EXISTS challans (
   id bigserial primary key, challan_no text, customer text,
   customer_address text, challan_date date, purpose text,
-  remarks text, created_at timestamptz default now()
+  remarks text, color text default '', created_by text default '',
+  created_at timestamptz default now()
 );
-CREATE TABLE challan_items (
-  id bigserial primary key, challan_id bigint references challans(id) on delete cascade,
+CREATE TABLE IF NOT EXISTS challan_items (
+  id bigserial primary key,
+  challan_id bigint references challans(id) on delete cascade,
   item_id bigint, item_name text, sku text,
   qty numeric, unit text, remarks text
 );
+-- Add missing columns if tables already exist
+ALTER TABLE items ADD COLUMN IF NOT EXISTS item_code text;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS set_size numeric DEFAULT 1;
+ALTER TABLE items ADD COLUMN IF NOT EXISTS monthly_sales text DEFAULT '{}';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS color text DEFAULT '';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_by text DEFAULT '';
+ALTER TABLE challans ADD COLUMN IF NOT EXISTS color text DEFAULT '';
+ALTER TABLE challans ADD COLUMN IF NOT EXISTS created_by text DEFAULT '';
+-- Enable RLS
 ALTER TABLE items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE challan_items ENABLE ROW LEVEL SECURITY;
+-- Drop old policies if exist, then recreate
+DROP POLICY IF EXISTS "all" ON items;
+DROP POLICY IF EXISTS "all" ON sales;
+DROP POLICY IF EXISTS "all" ON sale_items;
+DROP POLICY IF EXISTS "all" ON challans;
+DROP POLICY IF EXISTS "all" ON challan_items;
 CREATE POLICY "all" ON items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON sales FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON sale_items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON challans FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</div>
-
     <div style="margin-top:16px">
       <div class="fg" style="margin-bottom:10px">
         <label>Supabase Project URL</label>
@@ -228,13 +194,12 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
         <label>Supabase Anon Key</label>
         <input id="sb-key" placeholder="eyJhbGci..."/>
       </div>
-      <button class="btn btn-primary" style="width:100%;padding:11px" onclick="connectDB()">Connect &amp; Launch App</button>
+      <button class="btn btn-primary" style="width:100%;padding:11px" onclick="connectDB()">Connect &amp; Launch</button>
       <div id="setup-err" style="color:#c0392b;font-size:12px;margin-top:8px;text-align:center"></div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none">
   <div class="hdr">
     <div style="display:flex;align-items:center">
@@ -246,7 +211,6 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <button class="btn-logout" onclick="logout()">Change DB</button>
     </div>
   </div>
-
   <div class="layout">
     <div class="sidebar">
       <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
@@ -257,7 +221,6 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
       <div class="nav-item" onclick="nav('ai',this)"><span class="nav-icon">🤖</span>AI Insights</div>
     </div>
-
     <div class="main">
       <div id="pg-dashboard"></div>
       <div id="pg-inventory" style="display:none"></div>
@@ -266,12 +229,10 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div id="pg-challans" style="display:none"></div>
       <div id="pg-settings" style="display:none"></div>
       <div id="pg-ai" style="display:none"></div>
-      <div id="pg-reports" style="display:none"></div>
     </div>
   </div>
 </div>
 
-<!-- PRINT MODAL -->
 <div id="print-modal" class="print-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="print-box">
     <div id="print-content"></div>
@@ -282,17 +243,17 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
   </div>
 </div>
 
-<!-- ITEM FORM MODAL -->
 <div id="item-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)this.style.display='none'">
   <div class="modal-box">
     <div class="modal-title" id="item-modal-title">Add Item</div>
     <div class="form-grid">
       <div class="fg"><label>Item Code</label><input id="fm-code" placeholder="e.g. ITM-001"/></div>
       <div class="fg"><label>SKU</label><input id="fm-sku"/></div>
-      <div class="fg"><label>Name *</label><input id="fm-name"/></div>
+      <div class="fg" style="grid-column:1/-1"><label>Name *</label><input id="fm-name"/></div>
       <div class="fg"><label>Category</label>
         <select id="fm-cat">
-          ${CATS.map(c=>`<option>${c}</option>`).join('')}
+          <option>Fabric</option><option>Accessories</option><option>Packaging</option>
+          <option>Finished Goods</option><option>Raw Material</option><option>Other</option>
         </select>
       </div>
       <div class="fg"><label>Unit</label>
@@ -315,7 +276,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
 
 <script>
 let sb=null, items=[], sales=[], challans=[], editingItemId=null;
-let DB_SCHEMA={item_code:false,set_size:false,created_by:false,color:false};
+const CATS=['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
 let settings={
   company_name:'Styleys India LLP',
   company_address:'New Delhi, India',
@@ -323,143 +284,94 @@ let settings={
   company_email:'info@styleys.in',
   operator:'Admin'
 };
-const CATS=['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
-const UNITS=['pcs','kg','meters','boxes','rolls','sets'];
 
 // ── INIT ──────────────────────────────────────────────
 window.onload=()=>{
   document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-  loadSettings();
-  const u=localStorage.getItem('sb_url'), k=localStorage.getItem('sb_key');
+  loadSettingsFromStorage();
+  const u=localStorage.getItem('sb_url'),k=localStorage.getItem('sb_key');
   if(u&&k) launch(u,k); else document.getElementById('setup-screen').style.display='block';
 };
-function connectDB(){
-  const u=document.getElementById('sb-url').value.trim(), k=document.getElementById('sb-key').value.trim();
-  if(!u||!k){document.getElementById('setup-err').textContent='Dono fields bharo.';return;}
-  localStorage.setItem('sb_url',u); localStorage.setItem('sb_key',k); launch(u,k);
+
+function loadSettingsFromStorage(){
+  settings.company_name=localStorage.getItem('company_name')||settings.company_name;
+  settings.company_address=localStorage.getItem('company_address')||settings.company_address;
+  settings.company_gst=localStorage.getItem('company_gst')||settings.company_gst;
+  settings.company_email=localStorage.getItem('company_email')||settings.company_email;
+  settings.operator=localStorage.getItem('operator_name')||settings.operator;
 }
+
+function connectDB(){
+  const u=document.getElementById('sb-url').value.trim(),k=document.getElementById('sb-key').value.trim();
+  if(!u||!k){document.getElementById('setup-err').textContent='Dono fields bharo.';return;}
+  localStorage.setItem('sb_url',u);localStorage.setItem('sb_key',k);launch(u,k);
+}
+
 async function launch(u,k){
   sb=window.supabase.createClient(u,k);
-  await checkDbSchema();
-  loadSettings();
   document.getElementById('setup-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  loadAll();
+  await loadAll();
 }
+
 function logout(){localStorage.removeItem('sb_url');localStorage.removeItem('sb_key');location.reload();}
 
-// ── DATA ──────────────────────────────────────────────
+// ── LOAD DATA ─────────────────────────────────────────
 async function loadAll(){
-  console.log('Loading all data...');
-  const [a,b,c]=await Promise.all([
-    sb.from('items').select('*').order('name'),
-    sb.from('sales').select('*,sale_items(*)').order('id',{ascending:false}),
-    sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false})
-  ]);
-  items=a.data||[]; sales=b.data||[]; challans=c.data||[];
-  console.log('Items loaded:', items.length);
-  renderDashboard(); renderInventoryPage(); renderSalesPage(); renderChallansPage(); renderSettingsPage();
+  try{
+    const[a,b,c]=await Promise.all([
+      sb.from('items').select('*').order('name'),
+      sb.from('sales').select('*,sale_items(*)').order('id',{ascending:false}),
+      sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false})
+    ]);
+    if(a.error) throw new Error('Items load error: '+a.error.message);
+    if(b.error) throw new Error('Sales load error: '+b.error.message);
+    if(c.error) throw new Error('Challans load error: '+c.error.message);
+    items=a.data||[];sales=b.data||[];challans=c.data||[];
+    renderDashboard();renderInventoryPage();renderSalesPage();renderChallansPage();renderSettingsPage();
+  }catch(e){
+    alert('Data load error: '+e.message+'\n\nSQL Editor mein fix SQL zaroor run karo.');
+  }
 }
-
-async function checkDbColumn(table,column){
-  const {error}=await sb.from(table).select(`id,${column}`).limit(1);
-  return !error;
-}
-
-async function checkDbSchema(){
-  DB_SCHEMA.item_code = await checkDbColumn('items','item_code');
-  DB_SCHEMA.set_size = await checkDbColumn('items','set_size');
-  DB_SCHEMA.monthly_sales = await checkDbColumn('items','monthly_sales');
-  DB_SCHEMA.created_by = await checkDbColumn('sales','created_by') || await checkDbColumn('challans','created_by');
-  DB_SCHEMA.color = await checkDbColumn('sales','color') || await checkDbColumn('challans','color');
-}
-
-function loadSettings(){
-  const savedCats=localStorage.getItem('categories');
-  if(savedCats) CATS=JSON.parse(savedCats);
-  settings.company_name = localStorage.getItem('company_name') || settings.company_name;
-  settings.company_address = localStorage.getItem('company_address') || settings.company_address;
-  settings.company_gst = localStorage.getItem('company_gst') || settings.company_gst;
-  settings.company_email = localStorage.getItem('company_email') || settings.company_email;
-  settings.operator = localStorage.getItem('operator_name') || settings.operator;
-  document.querySelectorAll('.hdr-logo').forEach(el=>el.textContent='STYLEYS');
-  if(document.getElementById('hdr-date')) document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-}
-
-function saveSettings(){
-  settings.company_name = document.getElementById('st-name').value.trim()||settings.company_name;
-  settings.company_address = document.getElementById('st-address').value.trim()||settings.company_address;
-  settings.company_gst = document.getElementById('st-gst').value.trim()||settings.company_gst;
-  settings.company_email = document.getElementById('st-email').value.trim()||settings.company_email;
-  settings.operator = document.getElementById('st-operator').value.trim()||settings.operator;
-  localStorage.setItem('company_name',settings.company_name);
-  localStorage.setItem('company_address',settings.company_address);
-  localStorage.setItem('company_gst',settings.company_gst);
-  localStorage.setItem('company_email',settings.company_email);
-  localStorage.setItem('operator_name',settings.operator);
-  document.getElementById('settings-save-msg').textContent='Settings saved locally.';
-  setTimeout(()=>{document.getElementById('settings-save-msg').textContent='';},3000);
-}
-
-function renderSettingsPage(){
-  if(!document.getElementById('pg-settings')) return;
-  document.getElementById('pg-settings').innerHTML=`
-  <div class="page-title">Settings</div>
-  <div class="card">
-    <div class="card-title">Company & Operator Settings</div>
-    <div class="form-grid">
-      <div class="fg"><label>Company Name</label><input id="st-name" value="${settings.company_name}"/></div>
-      <div class="fg"><label>Company GSTIN</label><input id="st-gst" value="${settings.company_gst}"/></div>
-      <div class="fg"><label>Company Address</label><input id="st-address" value="${settings.company_address}"/></div>
-      <div class="fg"><label>Company Email</label><input id="st-email" value="${settings.company_email}"/></div>
-      <div class="fg" style="grid-column:1/-1"><label>Operator / User Name</label><input id="st-operator" value="${settings.operator}" placeholder="Admin or Sales User"/></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
-    </div>
-    <div id="settings-save-msg" style="color:#27ae60;font-size:13px;margin-top:10px"></div>
-  </div>`;
-}
-
 
 // ── NAV ───────────────────────────────────────────────
 function nav(pg,el){
-  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>document.getElementById('pg-'+p).style.display='none');
+  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>{
+    const el=document.getElementById('pg-'+p);
+    if(el) el.style.display='none';
+  });
   document.getElementById('pg-'+pg).style.display='block';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   if(pg==='bulk') renderBulkPage();
   if(pg==='ai') renderAiPage();
-  if(pg==='settings') renderSettingsPage();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
 function renderDashboard(){
-  const low=items.filter(i=>i.qty>0&&i.qty<=i.threshold);
-  const out=items.filter(i=>i.qty<=0);
-  const totalVal=items.reduce((s,i)=>s+i.qty*i.price,0);
-  const totalSales=sales.reduce((s,o)=>s+(o.total||0),0);
+  const low=items.filter(i=>Number(i.qty)>0&&Number(i.qty)<=Number(i.threshold));
+  const out=items.filter(i=>Number(i.qty)<=0);
+  const totalVal=items.reduce((s,i)=>s+Number(i.qty)*Number(i.price),0);
+  const totalSales=sales.reduce((s,o)=>s+Number(o.total||0),0);
   const pending=sales.filter(o=>o.payment_status==='Pending').length;
-  const maxCat=Math.max(...CATS.map(c=>items.filter(i=>i.category===c).reduce((s,i)=>s+i.qty,0)),1);
-
+  const catTotals=CATS.map(c=>items.filter(i=>i.category===c).reduce((s,i)=>s+Number(i.qty),0));
+  const maxCat=Math.max(...catTotals,1);
   document.getElementById('pg-dashboard').innerHTML=`
-  <div class="page-title">Dashboard <span style="font-size:13px;color:#aaa;font-weight:400">Welcome back, Styleys India LLP</span></div>
+  <div class="page-title">Dashboard</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total SKUs</div><div class="metric-value purple">${items.length}</div><div class="metric-sub">Active products</div></div>
-    <div class="metric" style="cursor:pointer" onclick="filterInventoryAndNavigate('low')"><div class="metric-label">Low Stock</div><div class="metric-value red">${low.length}</div><div class="metric-sub">Need reorder</div></div>
-    <div class="metric" style="cursor:pointer" onclick="filterInventoryAndNavigate('out')"><div class="metric-label">Out of Stock</div><div class="metric-value orange">${out.length}</div><div class="metric-sub">Zero quantity</div></div>
-    <div class="metric"><div class="metric-label">Inventory Value</div><div class="metric-value green">₹${Math.round(totalVal).toLocaleString('en-IN')}</div><div class="metric-sub">At cost price</div></div>
-    <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value purple">₹${Math.round(totalSales).toLocaleString('en-IN')}</div><div class="metric-sub">${sales.length} orders</div></div>
-    <div class="metric"><div class="metric-label">Pending Payment</div><div class="metric-value orange">${pending}</div><div class="metric-sub">Orders unpaid</div></div>
+    <div class="metric"><div class="metric-label">Total SKUs</div><div class="metric-value purple">${items.length}</div></div>
+    <div class="metric"><div class="metric-label">Low Stock</div><div class="metric-value red">${low.length}</div></div>
+    <div class="metric"><div class="metric-label">Out of Stock</div><div class="metric-value orange">${out.length}</div></div>
+    <div class="metric"><div class="metric-label">Inventory Value</div><div class="metric-value green">₹${Math.round(totalVal).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value purple">₹${Math.round(totalSales).toLocaleString('en-IN')}</div></div>
+    <div class="metric"><div class="metric-label">Pending Payment</div><div class="metric-value orange">${pending}</div></div>
   </div>
-
-  ${low.length>0?`<div class="alert alert-danger"><b>⚠️ Low Stock Alert:</b> ${low.map(i=>`${i.name} (${i.qty} ${i.unit})`).join(', ')}</div>`:''}
+  ${low.length>0?`<div class="alert alert-danger"><b>⚠️ Low Stock:</b> ${low.map(i=>`${i.name} (${i.qty})`).join(', ')}</div>`:''}
   ${out.length>0?`<div class="alert alert-info"><b>🚫 Out of Stock:</b> ${out.map(i=>i.name).join(', ')}</div>`:''}
-
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
     <div class="card">
       <div class="card-title">Stock by Category</div>
-      ${CATS.map(c=>{const t=items.filter(i=>i.category===c).reduce((s,i)=>s+Number(i.qty),0);return`<div class="bar-wrap"><div class="bar-label"><span>${c}</span><span>${t}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(t/maxCat*100)}%"></div></div></div>`}).join('')}
+      ${CATS.map((c,i)=>`<div class="bar-wrap"><div class="bar-label"><span>${c}</span><span>${catTotals[i]}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(catTotals[i]/maxCat*100)}%"></div></div></div>`).join('')}
     </div>
     <div class="card">
       <div class="card-title">Recent Orders</div>
@@ -471,18 +383,14 @@ function renderDashboard(){
   </div>`;
 }
 
-// ── INVENTORY PAGE ────────────────────────────────────
+// ── INVENTORY ─────────────────────────────────────────
 function renderInventoryPage(){
   document.getElementById('pg-inventory').innerHTML=`
   <div class="page-title">Inventory
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
-      <button class="btn btn-secondary" onclick="openCategoryModal()">+ Add Category</button>
-      <button class="btn btn-secondary" onclick="autoCalcThreshold()">📊 Auto Threshold (30-day)</button>
-    </div>
+    <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
   </div>
   <div class="search-row">
-    <input class="search-input" id="inv-q" placeholder="🔍 Search by code, name, SKU, category..." oninput="filterInv()"/>
+    <input class="search-input" id="inv-q" placeholder="🔍 Search name, SKU, code..." oninput="filterInv()"/>
     <select id="inv-cat" style="padding:9px 12px;border-radius:8px;border:1.5px solid #e0d8f0;background:#fff;font-size:13px" onchange="filterInv()">
       <option value="">All Categories</option>
       ${CATS.map(c=>`<option>${c}</option>`).join('')}
@@ -493,14 +401,10 @@ function renderInventoryPage(){
       <option value="out">Out of Stock</option>
       <option value="ok">In Stock</option>
     </select>
-    <button class="btn btn-secondary" onclick="renderSalesReportPage();document.getElementById('pg-inventory').style.display='none';document.getElementById('pg-reports').style.display='block'" style="padding:8px 16px;font-size:13px">📊 Monthly Sales</button>
-  </div>
-  <div class="card" style="margin-bottom:16px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-    ${CATS.map(c=>{const itemsByCat=items.filter(i=>i.category===c); if(!itemsByCat.length) return ''; const totalQty=itemsByCat.reduce((s,i)=>s+Number(i.qty),0); const totalPcs=itemsByCat.reduce((s,i)=>s+Number(i.qty)*(Number(i.set_size)||1),0); return `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.07)"><div style="font-size:12px;color:#888;margin-bottom:6px">${c}</div><div style="font-size:20px;font-weight:700">${totalQty}</div><div style="font-size:12px;color:#555;margin-top:6px">Eq. ${totalPcs} pcs</div></div>`}).join('')}
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Days Left</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="inv-tbody"></tbody>
     </table>
   </div>`;
@@ -512,91 +416,39 @@ function filterInv(){
   const cat=document.getElementById('inv-cat')?.value||'';
   const st=document.getElementById('inv-status')?.value||'';
   const filtered=items.filter(i=>{
-    const ms=i.name?.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q);
+    const ms=i.name?.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q);
     const mc=!cat||i.category===cat;
-    const mst=!st||(st==='out'&&i.qty<=0)||(st==='low'&&i.qty>0&&i.qty<=i.threshold)||(st==='ok'&&i.qty>i.threshold);
+    const qty=Number(i.qty),thr=Number(i.threshold);
+    const mst=!st||(st==='out'&&qty<=0)||(st==='low'&&qty>0&&qty<=thr)||(st==='ok'&&qty>thr);
     return ms&&mc&&mst;
   });
   const tbody=document.getElementById('inv-tbody');
   if(!tbody) return;
-  tbody.innerHTML=filtered.length===0?`<tr><td colspan="13" style="text-align:center;padding:24px;color:#ccc">Koi item nahi mila</td></tr>`:
-  filtered.map(i=>`<tr>
-    <td style="color:#999;font-size:12px">${i.item_code||'-'}</td>
-    <td style="color:#999;font-size:12px">${i.sku||'-'}</td>
-    <td style="font-weight:600">${i.name}</td>
-    <td>${i.category||'-'}</td>
-    <td style="font-weight:600;color:${i.qty<=0?'#e74c3c':i.qty<=i.threshold?'#e67e22':'#222'}">${i.qty}${(i.set_size||1)>1?` (${i.qty*(i.set_size||1)} pcs)`:''}</td>
-    <td>${i.unit}</td>
-    <td>${i.threshold}</td>
-    <td>₹${Number(i.price).toLocaleString('en-IN')}</td>
-    <td style="color:#aaa;font-size:12px">${i.hsn||'-'}</td>
-    <td style="font-size:12px">${i.location||'-'}</td>
-    <td style="font-size:12px">${i.set_size||1}</td>
-    <td><span class="badge ${i.qty<=0?'badge-out':i.qty<=i.threshold?'badge-low':'badge-ok'}">${i.qty<=0?'Out of Stock':i.qty<=i.threshold?'Low Stock':'In Stock'}</span></td>
-    <td style="font-size:12px;color:#0066cc;font-weight:600">${getStockRunway(i).daysLeft===null?'-':getStockRunway(i).daysLeft+' days'}</td>
-    <td>
-      <div style="display:flex;gap:5px">
+  tbody.innerHTML=filtered.length===0?`<tr><td colspan="12" style="text-align:center;padding:24px;color:#ccc">Koi item nahi mila</td></tr>`:
+  filtered.map(i=>{
+    const qty=Number(i.qty),thr=Number(i.threshold);
+    return`<tr>
+      <td style="color:#999;font-size:12px">${i.item_code||'-'}</td>
+      <td style="color:#999;font-size:12px">${i.sku||'-'}</td>
+      <td style="font-weight:600">${i.name}</td>
+      <td>${i.category||'-'}</td>
+      <td style="font-weight:600;color:${qty<=0?'#e74c3c':qty<=thr?'#e67e22':'#222'}">${qty}</td>
+      <td>${i.unit}</td><td>${i.threshold}</td>
+      <td>₹${Number(i.price).toLocaleString('en-IN')}</td>
+      <td style="color:#aaa;font-size:12px">${i.hsn||'-'}</td>
+      <td style="font-size:12px">${i.location||'-'}</td>
+      <td><span class="badge ${qty<=0?'badge-out':qty<=thr?'badge-low':'badge-ok'}">${qty<=0?'Out of Stock':qty<=thr?'Low Stock':'In Stock'}</span></td>
+      <td><div style="display:flex;gap:5px">
         <button class="btn btn-secondary btn-sm" onclick="openItemModal(${i.id})">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="delItem(${i.id})">Del</button>
-      </div>
-    </td>
-  </tr>`).join('');
-}
-
-function filterInventoryAndNavigate(status){
-  document.getElementById('inv-status').value=status;
-  filterInv();
-  const navItem=document.querySelector('[onclick*="renderPage(2)"]');
-  if(navItem) navItem.click();
-  else {
-    Array.from(document.querySelectorAll('[onclick*="renderPage"]')).forEach(el=>el.classList.remove('nav-active'));
-    document.getElementById('pg-dashboard').style.display='none';
-    document.getElementById('pg-inventory').style.display='block';
-    document.querySelectorAll('[onclick*="renderPage(2)"]')[0]?.classList.add('nav-active');
-  }
-}
-
-function openCategoryModal(){
-  const newCat=prompt('Naya category naam enter karo:');
-  if(newCat && newCat.trim()){
-    const cat=newCat.trim();
-    if(!CATS.includes(cat)){
-      CATS.push(cat);
-      localStorage.setItem('categories', JSON.stringify(CATS));
-      renderInventoryPage();
-      alert(`✅ Category "${cat}" add ho gaya!`);
-    } else {
-      alert('Ye category pehle se hai!');
-    }
-  }
-}
-
-async function autoCalcThreshold(){
-  const thirtyDaysAgo=new Date(Date.now()-30*86400000);
-  const last30Sales=sales.filter(s=>new Date(s.date)>=thirtyDaysAgo);
-  const itemUsage={};
-  
-  for(const sale of last30Sales){
-    for(const item of (sale.sale_items||[])){
-      const itemId=item.item_id;
-      itemUsage[itemId]=(itemUsage[itemId]||0)+item.qty;
-    }
-  }
-  
-  let updated=0;
-  for(const item of items){
-    const dailyUsage=itemUsage[item.id]?itemUsage[item.id]/30:2;
-    const newThreshold=Math.max(Math.ceil(dailyUsage*15), 5);
-    await sb.from('items').update({threshold:newThreshold}).eq('id',item.id);
-    updated++;
-  }
-  alert(`✅ ${updated} items ka threshold auto calculate ho gaya (15-day buffer)!`);
-  await loadAll();
+      </div></td>
+    </tr>`;
+  }).join('');
 }
 
 function openItemModal(id){
   editingItemId=id;
-  const it=id?items.find(x=>x.id===id):{sku:'',name:'',category:'Fabric',unit:'pcs',qty:0,threshold:10,price:0,hsn:'',location:'',set_size:1};
+  const it=id?items.find(x=>x.id===id):{sku:'',item_code:'',name:'',category:'Fabric',unit:'pcs',qty:0,threshold:10,price:0,hsn:'',location:'',set_size:1};
   document.getElementById('item-modal-title').textContent=id?'Edit Item':'Add New Item';
   document.getElementById('fm-code').value=it.item_code||'';
   document.getElementById('fm-sku').value=it.sku||'';
@@ -615,38 +467,36 @@ function openItemModal(id){
 
 async function saveItem(){
   const name=document.getElementById('fm-name').value.trim();
-  const code=document.getElementById('fm-code').value.trim();
-  const sku=document.getElementById('fm-sku').value.trim();
   if(!name){document.getElementById('item-modal-err').textContent='Name zaroori hai';return;}
-  if(!sku){document.getElementById('item-modal-err').textContent='SKU zaroori hai';return;}
-  const existing=items.find(i=>(i.sku===sku||(code&&i.item_code===code)) && i.id!==editingItemId);
-  if(existing){document.getElementById('item-modal-err').textContent='Ye SKU/item code already maujood hai. Edit karo ya unique code do.';return;}
-  const data={item_code:code,sku, name,category:document.getElementById('fm-cat').value,
-    unit:document.getElementById('fm-unit').value,qty:Number(document.getElementById('fm-qty').value),
-    threshold:Number(document.getElementById('fm-thr').value),price:Number(document.getElementById('fm-price').value),
-    hsn:document.getElementById('fm-hsn').value.trim(),location:document.getElementById('fm-loc').value.trim(),
-    set_size:Number(document.getElementById('fm-set-size').value)||1};
-  if(!code) delete data.item_code;
-  if(!DB_SCHEMA.item_code) delete data.item_code;
-  if(!DB_SCHEMA.set_size) delete data.set_size;
+  const data={
+    item_code:document.getElementById('fm-code').value.trim(),
+    sku:document.getElementById('fm-sku').value.trim(),
+    name,category:document.getElementById('fm-cat').value,
+    unit:document.getElementById('fm-unit').value,
+    qty:Number(document.getElementById('fm-qty').value),
+    threshold:Number(document.getElementById('fm-thr').value),
+    price:Number(document.getElementById('fm-price').value),
+    hsn:document.getElementById('fm-hsn').value.trim(),
+    location:document.getElementById('fm-loc').value.trim(),
+    set_size:Number(document.getElementById('fm-set-size').value)||1,
+    monthly_sales:'{}'
+  };
   try{
-    if(editingItemId){
-      const {error}=await sb.from('items').update(data).eq('id',editingItemId);
-      if(error) throw error;
-    } else {
-      const {error}=await sb.from('items').insert(data);
-      if(error) throw error;
-    }
+    let error;
+    if(editingItemId){({error}=await sb.from('items').update(data).eq('id',editingItemId));}
+    else{({error}=await sb.from('items').insert(data));}
+    if(error) throw error;
     document.getElementById('item-modal').style.display='none';
     await loadAll();
-  }catch(err){
-    document.getElementById('item-modal-err').textContent=`Error: ${err.message || err}`;
+  }catch(e){
+    document.getElementById('item-modal-err').textContent='Error: '+e.message;
   }
 }
 
 async function delItem(id){
   if(!confirm('Delete karna chahte ho?')) return;
-  await sb.from('items').delete().eq('id',id);
+  const{error}=await sb.from('items').delete().eq('id',id);
+  if(error){alert('Delete error: '+error.message);return;}
   await loadAll();
 }
 
@@ -655,131 +505,62 @@ function renderBulkPage(){
   document.getElementById('pg-bulk').innerHTML=`
   <div class="page-title">Bulk Inventory Upload</div>
   <div class="card">
-    <div class="card-title">CSV File Upload</div>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">CSV file mein yeh columns hone chahiye: <b>action, sku, name, category, qty, threshold, unit, price, hsn, location, set_size, monthly_sales</b></p>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">Ya phir monthly fields use karo: <b>sales_2026-03, sales_2026-04, etc.</b></p>
+    <div class="card-title">CSV Upload</div>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">Columns: <b>item_code, sku, name, category, qty, threshold, unit, price, hsn, location, set_size</b></p>
     <div class="upload-zone" id="drop-zone" onclick="document.getElementById('csv-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
       <div class="upload-icon">📂</div>
-      <p>CSV file yahan drag & drop karo</p>
+      <p>CSV file drag & drop karo</p>
       <small>ya click karke select karo</small>
     </div>
     <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="handleCSV(this.files[0])"/>
     <div id="bulk-preview" style="margin-top:16px"></div>
   </div>
   <div class="card">
-    <div class="card-title">CSV Format Download</div>
-    <p style="font-size:13px;color:#888;margin-bottom:12px">Sample CSV download karo aur usi format mein fill karo:</p>
+    <div class="card-title">Sample CSV Download</div>
     <button class="btn btn-outline" onclick="downloadSample()">⬇️ Download Sample CSV</button>
   </div>`;
 }
 
-function handleDrop(e){
-  e.preventDefault();
-  document.getElementById('drop-zone').classList.remove('drag');
-  handleCSV(e.dataTransfer.files[0]);
-}
-
+function handleDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag');handleCSV(e.dataTransfer.files[0]);}
 function handleCSV(file){
   if(!file) return;
-  Papa.parse(file,{
-    header:true, skipEmptyLines:true,
-    complete: async(res)=>{
-      const rows=res.data;
-      document.getElementById('bulk-preview').innerHTML=`
-        <div class="alert alert-info"><b>${rows.length} records found.</b> Preview:</div>
-        <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-          <thead><tr><th>Action</th><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Price</th><th>Set Size</th></tr></thead>
-          <tbody>${rows.slice(0,10).map(r=>`<tr><td>${r.action||'insert'}</td><td>${r.item_code||''}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>${r.unit||'pcs'}</td><td>₹${r.price||0}</td><td>${r.set_size||1}</td></tr>`).join('')}</tbody>
-        </table></div>
-        ${rows.length>10?`<p style="font-size:12px;color:#aaa;margin-top:6px">... aur ${rows.length-10} aur records</p>`:''}
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn btn-primary" onclick="importCSV(${JSON.stringify(rows).split('"').join("'")})">✅ Import All ${rows.length} Records</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('bulk-preview').innerHTML=''">Cancel</button>
-        </div>`;
-    }
-  });
-}
-
-function parseMonthlySalesRow(r){
-  const months={};
-  if(r.monthly_sales){
-    try {
-      const parsed = typeof r.monthly_sales === 'string' ? JSON.parse(r.monthly_sales) : r.monthly_sales;
-      if(parsed && typeof parsed === 'object'){
-        Object.entries(parsed).forEach(([m,v])=>{ if(v!=='' && v!=null) months[m]=Number(v)||0; });
-      }
-    } catch(e) {
-      // ignore parse errors and continue with other columns
-    }
-  }
-  Object.keys(r).forEach(k=>{
-    const match = k.match(/^sales_(\d{4}-\d{2})$/);
-    if(match && r[k]!==undefined && r[k]!==null && r[k]!==""){
-      months[match[1]]=Number(r[k])||0;
-    }
-  });
-  return Object.keys(months).length?months:null;
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
+    const rows=res.data;
+    document.getElementById('bulk-preview').innerHTML=`
+      <div class="alert alert-info"><b>${rows.length} records found.</b></div>
+      <div class="tbl-wrap" style="max-height:250px;overflow-y:auto"><table>
+        <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th></tr></thead>
+        <tbody>${rows.slice(0,8).map(r=>`<tr><td>${r.item_code||''}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>₹${r.price||0}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" id="import-btn">✅ Import ${rows.length} Records</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('bulk-preview').innerHTML=''">Cancel</button>
+      </div>`;
+    document.getElementById('import-btn').onclick=()=>importCSV(rows);
+  }});
 }
 
 async function importCSV(rows){
-  let inserted=0, updated=0, deleted=0, errors=0;
-  const errorMsgs = [];
+  let ok=0,err=0;
   for(const r of rows){
-    try {
-      const action=(r.action||'insert').toLowerCase();
-      const monthlySales=parseMonthlySalesRow(r);
-      const data={
-        item_code:r.item_code||'',sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
-        qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
-        unit:r.unit||'pcs',price:Number(r.price)||0,
-        hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
-      };
-      if(DB_SCHEMA.monthly_sales && monthlySales){
-        data.monthly_sales=JSON.stringify(monthlySales);
-      }
-      if(!DB_SCHEMA.monthly_sales) delete data.monthly_sales;
-      if(!DB_SCHEMA.item_code) delete data.item_code;
-      if(!DB_SCHEMA.set_size) delete data.set_size;
-      if(action==='delete'){
-        if(r.sku) {
-          const {error} = await sb.from('items').delete().eq('sku',r.sku);
-          if(error) throw error;
-          deleted++;
-        }
-      } else if(action==='update'){
-        if(r.sku) {
-          const {error} = await sb.from('items').update(data).eq('sku',r.sku);
-          if(error) throw error;
-          updated++;
-        }
-      } else { // insert
-        if(!r.sku || !r.name) throw new Error('SKU and Name are required for insert');
-        const {error} = await sb.from('items').insert(data);
-        if(error) throw error;
-        inserted++;
-      }
-    } catch(err) {
-      errors++;
-      errorMsgs.push(`Row ${rows.indexOf(r)+1}: ${err.message}`);
-    }
+    if(!r.name) continue;
+    const data={item_code:r.item_code||'',sku:r.sku||'',name:r.name,category:r.category||'Fabric',
+      qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,unit:r.unit||'pcs',
+      price:Number(r.price)||0,hsn:r.hsn||'',location:r.location||'',
+      set_size:Number(r.set_size)||1,monthly_sales:'{}'};
+    const{error}=await sb.from('items').insert(data);
+    if(error) err++; else ok++;
   }
-  const successMsg = `✅ Import complete: ${inserted} inserted, ${updated} updated, ${deleted} deleted!`;
-  const errorMsg = errors > 0 ? `<div class="alert alert-error">❌ ${errors} errors:<br>${errorMsgs.join('<br>')}</div>` : '';
-  document.getElementById('bulk-preview').innerHTML = errorMsg + (inserted+updated+deleted > 0 ? `<div class="alert alert-success">${successMsg}</div>` : '');
-  console.log('Before loadAll, items count:', items.length);
+  document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-success">✅ ${ok} imported${err>0?`, ${err} errors`:''}</div>`;
   await loadAll();
-  console.log('After loadAll, items count:', items.length);
-  console.log('First few items:', items.slice(0,3));
 }
 
 function downloadSample(){
-  const csv='action,item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size,monthly_sales\ninsert,ITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1,"{\"2026-03\": 50, \"2026-04\": 60}"\nupdate,ITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1,"{\"2026-03\": 120, \"2026-04\": 110}"\ndelete,ITM-999,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='styleys_sample_inventory.csv'; a.click();
+  const csv='item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\nITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1';
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='styleys_sample.csv';a.click();
 }
 
-// ── SALES PAGE ────────────────────────────────────────
+// ── SALES ─────────────────────────────────────────────
 let saleRows=[];
 function renderSalesPage(){
   document.getElementById('pg-sales').innerHTML=`
@@ -787,93 +568,65 @@ function renderSalesPage(){
   <div class="card">
     <div class="card-title">New Sale Order</div>
     <div class="form-grid">
-        <div class="fg"><label>Customer Name *</label><input id="sc-cust" placeholder="Customer ka naam"/></div>
-      <div class="fg"><label>Customer GSTIN</label><input id="sc-gstin" placeholder="GSTIN (optional)"/></div>
+      <div class="fg"><label>Customer Name *</label><input id="sc-cust" placeholder="Customer naam"/></div>
+      <div class="fg"><label>Customer GSTIN</label><input id="sc-gstin" placeholder="optional"/></div>
       <div class="fg"><label>Date</label><input id="sc-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
-      <div class="fg"><label>GST Rate (%)</label><select id="sc-gst"><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option><option value="0">0% (Exempt)</option></select></div>
-      <div class="fg"><label>Color</label><input id="sc-color" placeholder="e.g., Red, Blue"/></div>
-      <div class="fg"><label>Prepared By</label><input id="sc-created-by" placeholder="Sales created by" value="${settings.operator}"/></div>
-    </div>
-    <div id="recent-parties-sales" style="font-size:12px;color:#555;margin-top:10px"></div>
-
-    <div style="margin-bottom:8px">
-      <div class="order-row-header">
-        <span>Item</span><span>Qty</span><span>Rate (₹)</span><span></span>
+      <div class="fg"><label>GST Rate (%)</label>
+        <select id="sc-gst"><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option><option value="0">0% Exempt</option></select>
       </div>
-      <div id="sale-rows-container"></div>
-      <button class="btn btn-secondary" style="margin-top:6px" onclick="addSaleRow()">+ Add Item</button>
+      <div class="fg"><label>Color</label><input id="sc-color" placeholder="e.g. Red, Blue"/></div>
+      <div class="fg"><label>Prepared By</label><input id="sc-by" value="${settings.operator}"/></div>
     </div>
-
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-primary" onclick="submitSale()">Record Sale</button>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:#888;font-weight:600">ITEM</span>
+      <span style="font-size:11px;color:#888;font-weight:600">QTY</span>
+      <span style="font-size:11px;color:#888;font-weight:600">RATE (₹)</span>
+      <span></span>
+    </div>
+    <div id="sale-rows-container"></div>
+    <button class="btn btn-secondary" style="margin-top:6px" onclick="addSaleRow()">+ Add Item</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="submitSale()">💾 Record Sale</button>
       <button class="btn btn-secondary" onclick="resetSaleForm()">Clear</button>
     </div>
-    <div id="sale-err" style="color:#c0392b;font-size:12px;margin-top:8px"></div>
+    <div id="sale-err" style="color:#c0392b;font-size:13px;margin-top:8px;font-weight:600"></div>
   </div>
-
-  <div class="page-title" style="margin-top:8px">All Orders
-    <input class="search-input" id="sale-q" placeholder="🔍 Search orders..." oninput="filterSales()" style="width:240px;font-size:13px"/>
+  <div class="page-title">All Orders
+    <input class="search-input" id="sale-q" placeholder="🔍 Search..." oninput="filterSales()" style="width:240px;font-size:13px"/>
   </div>
   <div id="sales-list"></div>`;
-
-  saleRows=[{id:Date.now(),itemId:'',qty:1,price:0}];
-  renderPartySuggestions('sales');
-  renderSaleRows();
-  filterSales();
-}
-
-function getRecentParties(){
-  const names=[...new Set([...sales.map(o=>o.customer), ...challans.map(c=>c.customer)])].filter(Boolean);
-  return names.slice(0,8);
-}
-
-function renderPartySuggestions(type){
-  const container=document.getElementById(type==='sales'?'recent-parties-sales':'recent-parties-challans');
-  if(!container) return;
-  const names=getRecentParties();
-  if(!names.length){container.innerHTML='';return;}
-  container.innerHTML=`Recent parties: ${names.map(n=>`<button class="btn btn-sm btn-outline" onclick="fillParty('${type}','${n.replace(/'/g,"\\'")}')">${n}</button>`).join(' ')}`;
-}
-
-function fillParty(type,name){
-  const details={gstin:'',address:''};
-  const sale=sales.find(o=>o.customer===name);
-  const challan=challans.find(c=>c.customer===name);
-  if(sale){details.gstin=sale.customer_gstin||'';}
-  if(challan){details.address=challan.customer_address||'';}
-  if(type==='sales'){
-    document.getElementById('sc-cust').value=name;
-    document.getElementById('sc-gstin').value=details.gstin;
-    document.getElementById('sale-err').textContent='';
-  } else {
-    document.getElementById('cc-cust').value=name;
-    document.getElementById('cc-addr').value=details.address;
-    document.getElementById('challan-err').textContent='';
-  }
+  saleRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,price:0,unit:'pcs'}];
+  renderSaleRows();filterSales();
 }
 
 function renderSaleRows(){
   const c=document.getElementById('sale-rows-container');
   if(!c) return;
-  c.innerHTML=saleRows.map((row,idx)=>`
-    <div class="order-row" id="sr-${row.id}">
+  c.innerHTML=saleRows.map(row=>`
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:8px;align-items:end">
       <div class="search-dropdown-wrap">
-        <input placeholder="Item search karo..." id="sri-${row.id}" value="${row.itemName||''}" oninput="searchItemDrop('${row.id}','sri-${row.id}','srd-${row.id}')" autocomplete="off" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
+        <input placeholder="Item naam search karo..." id="sri-${row.id}" value="${row.itemName||''}"
+          oninput="searchItemDrop(${row.id},'sri-${row.id}','srd-${row.id}')"
+          autocomplete="off" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
         <div id="srd-${row.id}" class="item-dropdown" style="display:none"></div>
       </div>
-      <input type="number" id="srq-${row.id}" value="${row.qty}" min="1" onchange="updateSaleRow('${row.id}','qty',this.value)" style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
-      <input type="number" id="srp-${row.id}" value="${row.price}" min="0" onchange="updateSaleRow('${row.id}','price',this.value)" style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
-      <button class="btn btn-danger btn-sm" style="padding:8px 10px" onclick="removeSaleRow('${row.id}')">✕</button>
+      <input type="number" id="srq-${row.id}" value="${row.qty}" min="1"
+        onchange="updateSaleRow(${row.id},'qty',this.value)"
+        style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+      <input type="number" id="srp-${row.id}" value="${row.price}" min="0"
+        onchange="updateSaleRow(${row.id},'price',this.value)"
+        style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+      <button class="btn btn-danger btn-sm" style="padding:8px 10px" onclick="removeSaleRow(${row.id})">✕</button>
     </div>`).join('');
 }
 
 function searchItemDrop(rowId,inputId,dropId){
-  const q=document.getElementById(inputId).value.toLowerCase();
+  const q=(document.getElementById(inputId)?.value||'').toLowerCase();
   const drop=document.getElementById(dropId);
-  if(q.length<1){drop.style.display='none';return;}
-  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)).slice(0,8);
-  if(matches.length===0){drop.style.display='none';return;}
-  drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectItemForRow('${rowId}',${i.id},'${inputId}','${dropId}')">
+  if(!q){drop.style.display='none';return;}
+  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length){drop.style.display='none';return;}
+  drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectItemForRow(${rowId},${i.id},'${inputId}','${dropId}')">
     ${i.name}<span class="item-sku">${i.sku||''}</span>
     <span class="item-stock">Stock: ${i.qty} ${i.unit}</span>
   </div>`).join('');
@@ -881,166 +634,105 @@ function searchItemDrop(rowId,inputId,dropId){
 }
 
 function selectItemForRow(rowId,itemId,inputId,dropId){
-  const it=items.find(x=>x.id===itemId);
-  if(!it) return;
+  const it=items.find(x=>x.id===itemId);if(!it) return;
   const row=saleRows.find(r=>r.id==rowId);
-  if(row){row.itemId=itemId;row.itemName=it.name;row.price=it.price;row.unit=it.set_size>1?'sets':it.unit;}
+  if(row){row.itemId=itemId;row.itemName=it.name;row.price=Number(it.price);row.unit=it.unit;}
   document.getElementById(inputId).value=it.name;
   document.getElementById(dropId).style.display='none';
-  const priceEl=document.getElementById('srp-'+rowId);
-  if(priceEl) priceEl.value=it.price;
+  const pe=document.getElementById('srp-'+rowId);if(pe) pe.value=it.price;
 }
 
-function addSaleRow(){saleRows.push({id:Date.now(),itemId:'',qty:1,price:0});renderSaleRows();}
+function addSaleRow(){saleRows.push({id:Date.now(),itemId:'',itemName:'',qty:1,price:0,unit:'pcs'});renderSaleRows();}
 function removeSaleRow(id){if(saleRows.length===1) return;saleRows=saleRows.filter(r=>r.id!=id);renderSaleRows();}
-function updateSaleRow(id,field,val){const r=saleRows.find(x=>x.id==id);if(r)r[field]=Number(val);}
+function updateSaleRow(id,field,val){const r=saleRows.find(x=>x.id==id);if(r) r[field]=field==='qty'||field==='price'?Number(val):val;}
 
 async function submitSale(){
+  const errEl=document.getElementById('sale-err');
+  errEl.textContent='';
   const cust=document.getElementById('sc-cust').value.trim();
-  const gstin=document.getElementById('sc-gstin').value.trim();
-  const date=document.getElementById('sc-date').value;
+  if(!cust){errEl.textContent='❌ Customer name zaroori hai!';return;}
+  const validRows=saleRows.filter(r=>r.itemId&&Number(r.qty)>0);
+  if(!validRows.length){errEl.textContent='❌ Kam se kam ek item dropdown se select karo!';return;}
   const gstRate=Number(document.getElementById('sc-gst').value);
-  const color=document.getElementById('sc-color').value.trim();
-  const createdBy=document.getElementById('sc-created-by').value.trim()||settings.operator;
-  const err=document.getElementById('sale-err');
-  err.textContent='';
-  if(!cust){err.textContent='Customer name zaroori hai.';return;}
-
-  const rows=saleRows.filter(r=>r.itemId&&r.qty>0);
-  if(rows.length===0){err.textContent='Kam se kam ek item select karo.';return;}
-
-  const subtotal=rows.reduce((s,r)=>s+r.qty*r.price,0);
+  const subtotal=validRows.reduce((s,r)=>s+Number(r.qty)*Number(r.price),0);
   const gst=subtotal*gstRate/100;
   const total=subtotal+gst;
-  const orderNo='ORD-'+String(Date.now()).slice(-6);
-  const payload={
-    order_no:orderNo,customer:cust,customer_gstin:gstin,
-    sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending'
-  };
-  if(DB_SCHEMA.color) payload.color=color;
-  if(DB_SCHEMA.created_by) payload.created_by=createdBy;
-
-  try {
-    const {data:sale,error:saleError}=await sb.from('sales').insert(payload).select().single();
-    if(saleError) throw saleError;
-    if(sale){
-      const {error:itemError}=await sb.from('sale_items').insert(rows.map(r=>({
-        sale_id:sale.id,item_id:r.itemId,item_name:r.itemName,
-        sku:items.find(i=>i.id===r.itemId)?.sku||'',
-        qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
-      })));
-      if(itemError) throw itemError;
-      const currentMonth=new Date().toISOString().slice(0,7);
-      for(const r of rows){
-        const it=items.find(x=>x.id===r.itemId);
-        if(it) {
-          const deductQty = r.unit === 'sets' ? r.qty * it.set_size : r.qty;
-          const updateData={qty:Math.max(0,it.qty - deductQty)};
-          if(DB_SCHEMA.monthly_sales){
-            const monthlySales=it.monthly_sales||'{}';
-            const salesMap=JSON.parse(monthlySales);
-            salesMap[currentMonth]=(salesMap[currentMonth]||0)+deductQty;
-            updateData.monthly_sales=JSON.stringify(salesMap);
-          }
-          const {error:updateError}=await sb.from('items').update(updateData).eq('id',r.itemId);
-          if(updateError) throw updateError;
-        }
+  const orderNo='ORD-'+Date.now().toString().slice(-6);
+  errEl.textContent='⏳ Saving...';
+  try{
+    const{data:sale,error:e1}=await sb.from('sales').insert({
+      order_no:orderNo,customer:cust,
+      customer_gstin:document.getElementById('sc-gstin').value.trim(),
+      sale_date:document.getElementById('sc-date').value,
+      subtotal,gst_rate:gstRate,gst,total,
+      payment_status:'Pending',
+      color:document.getElementById('sc-color').value.trim(),
+      created_by:document.getElementById('sc-by').value.trim()||settings.operator
+    }).select().single();
+    if(e1) throw e1;
+    const{error:e2}=await sb.from('sale_items').insert(validRows.map(r=>({
+      sale_id:sale.id,item_id:r.itemId,item_name:r.itemName,
+      sku:items.find(i=>i.id===r.itemId)?.sku||'',
+      qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
+    })));
+    if(e2) throw e2;
+    for(const r of validRows){
+      const it=items.find(x=>x.id===r.itemId);
+      if(it){
+        const newQty=Math.max(0,Number(it.qty)-Number(r.qty));
+        const mm=new Date().toISOString().slice(0,7);
+        let ms={};try{ms=JSON.parse(it.monthly_sales||'{}')}catch(e){}
+        ms[mm]=(ms[mm]||0)+Number(r.qty);
+        await sb.from('items').update({qty:newQty,monthly_sales:JSON.stringify(ms)}).eq('id',r.itemId);
       }
     }
-    resetSaleForm();
-    await loadAll();
-  } catch(err) {
-    console.error('Sale submission failed', err);
-    const message = err.message || err.error_description || JSON.stringify(err);
-    document.getElementById('sale-err').textContent = `Error: ${message}`;
-    alert(`Sale save failed: ${message}`);
+    errEl.style.color='#27ae60';errEl.textContent='✅ Sale saved successfully!';
+    setTimeout(()=>{errEl.textContent='';errEl.style.color='#c0392b';},3000);
+    resetSaleForm();await loadAll();
+  }catch(e){
+    console.error('Sale error:',e);
+    errEl.textContent='❌ Error: '+e.message;
   }
 }
 
 function resetSaleForm(){
-  document.getElementById('sc-cust').value='';
-  document.getElementById('sc-gstin').value='';
-  document.getElementById('sc-color').value='';
-  document.getElementById('sale-err').textContent='';
-  saleRows=[{id:Date.now(),itemId:'',qty:1,price:0}];
+  ['sc-cust','sc-gstin','sc-color'].forEach(id=>document.getElementById(id).value='');
+  saleRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,price:0,unit:'pcs'}];
   renderSaleRows();
 }
 
-function getStockRunway(item){
-  const salesMap=item.monthly_sales?JSON.parse(item.monthly_sales):{};
-  const months=Object.values(salesMap);
-  const avgDailySales=months.length>0?months.reduce((a,b)=>a+b,0)/(months.length*30):0;
-  const daysLeft=avgDailySales>0?Math.round(item.qty/avgDailySales):null;
-  return{avgDaily:avgDailySales.toFixed(1),daysLeft};
-}
-
-function renderSalesReportPage(){
-  const all12Months=[];
-  for(let i=11;i>=0;i--){
-    const d=new Date();d.setMonth(d.getMonth()-i);
-    all12Months.push(d.toISOString().slice(0,7));
-  }
-  const monthlySKUData={};
-  for(const item of items){
-    const salesMap=item.monthly_sales?JSON.parse(item.monthly_sales):{};
-    for(const [month,qty] of Object.entries(salesMap)){
-      if(!monthlySKUData[item.sku]) monthlySKUData[item.sku]={name:item.name,data:{}};
-      monthlySKUData[item.sku].data[month]=qty;
-    }
-  }
-  let html=`<div class="page-title">Monthly Sales Report</div><div class="tbl-wrap"><table><thead><tr><th>SKU</th><th>Product Name</th>`;
-  all12Months.forEach(m=>html+=`<th>${m}</th>`);
-  html+=`<th>Total</th><th>Avg/Month</th></tr></thead><tbody>`;
-  Object.entries(monthlySKUData).forEach(([sku,{name,data}])=>{
-    const totalSales=Object.values(data).reduce((a,b)=>a+b,0);
-    const avgMonthly=(totalSales/12).toFixed(0);
-    html+=`<tr><td><b>${sku}</b></td><td>${name}</td>`;
-    all12Months.forEach(m=>html+=`<td>${data[m]||0}</td>`);
-    html+=`<td style="font-weight:600">${totalSales}</td><td>${avgMonthly}</td></tr>`;
-  });
-  html+=`</tbody></table></div>`;
-  document.getElementById('pg-reports').innerHTML=html;
-}
-
-async function togglePayment(id,current){
-  const next=current==='Paid'?'Pending':'Paid';
-  await sb.from('sales').update({payment_status:next}).eq('id',id);
+async function togglePayment(id,cur){
+  await sb.from('sales').update({payment_status:cur==='Paid'?'Pending':'Paid'}).eq('id',id);
   await loadAll();
 }
 
 function filterSales(){
   const q=(document.getElementById('sale-q')?.value||'').toLowerCase();
-  const filtered=sales.filter(o=>o.order_no?.toLowerCase().includes(q)||o.customer?.toLowerCase().includes(q)||o.color?.toLowerCase().includes(q)||o.created_by?.toLowerCase().includes(q));
-  document.getElementById('sales-list').innerHTML=filtered.map(o=>{
-    const si=o.sale_items||[];
-    return`<div class="order-card">
+  const list=sales.filter(o=>o.order_no?.toLowerCase().includes(q)||o.customer?.toLowerCase().includes(q));
+  document.getElementById('sales-list').innerHTML=list.map(o=>`
+    <div class="order-card">
       <div class="order-header">
         <div>
           <span style="font-weight:700;font-size:14px">${o.order_no}</span>
           <span style="margin-left:10px;color:#666;font-size:13px">${o.customer}</span>
           ${o.customer_gstin?`<span style="margin-left:8px;font-size:11px;color:#aaa">${o.customer_gstin}</span>`:''}
-          ${o.color?`<span style="margin-left:8px;font-size:11px;background:#f0f7ff;color:#1a5276;padding:2px 8px;border-radius:10px;font-weight:600">${o.color}</span>`:''}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-size:12px;color:#aaa">${o.sale_date}</span>
-          <span style="font-weight:700;font-size:15px">₹${Math.round(o.total||0).toLocaleString('en-IN')}</span>
-          <span class="badge ${o.payment_status==='Paid'?'badge-paid':'badge-pending'}" style="cursor:pointer" onclick="togglePayment(${o.id},'${o.payment_status}')" title="Click to toggle">${o.payment_status}</span>
+          <span style="font-weight:700">₹${Math.round(o.total||0).toLocaleString('en-IN')}</span>
+          <span class="badge ${o.payment_status==='Paid'?'badge-paid':'badge-pending'}" style="cursor:pointer" onclick="togglePayment(${o.id},'${o.payment_status}')">${o.payment_status}</span>
           <button class="btn-print" onclick="printSale(${o.id})">🖨️ Invoice</button>
         </div>
       </div>
-      <div style="font-size:12px;color:#777;margin-top:6px">Created by: ${o.created_by||settings.operator}</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px">${si.map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
-    </div>`;
-  }).join('')||'<div style="text-align:center;padding:30px;color:#ccc">Koi orders nahi</div>';
+      <div style="font-size:12px;color:#aaa;margin-top:4px">${(o.sale_items||[]).map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
+    </div>`).join('')||'<div style="text-align:center;padding:30px;color:#ccc">Koi orders nahi</div>';
 }
 
 function printSale(id){
-  const o=sales.find(s=>s.id===id);
-  if(!o) return;
+  const o=sales.find(s=>s.id===id);if(!o) return;
   const si=o.sale_items||[];
-  const sub=o.subtotal||0, gst=o.gst||0, total=o.total||0;
   document.getElementById('print-content').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #6c3fc5">
+    <div style="display:flex;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #6c3fc5">
       <div>
         <div style="background:#6c3fc5;color:#fff;display:inline-block;padding:6px 16px;border-radius:6px;font-weight:800;font-size:22px;letter-spacing:2px">STYLEYS</div>
         <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${settings.company_name}</div>
@@ -1050,25 +742,20 @@ function printSale(id){
       </div>
       <div style="text-align:right">
         <div style="font-size:22px;font-weight:800;color:#6c3fc5">TAX INVOICE</div>
-        <div style="font-size:14px;color:#555;margin-top:4px"><b>${o.order_no}</b></div>
+        <div style="font-size:14px;color:#555"><b>${o.order_no}</b></div>
         <div style="font-size:12px;color:#888">Date: ${o.sale_date}</div>
-        <div style="margin-top:8px;padding:6px 12px;background:#f0eaf9;border-radius:6px;font-size:12px"><b>Status:</b> ${o.payment_status}</div>
+        <div style="margin-top:6px;padding:5px 12px;background:#f0eaf9;border-radius:6px;font-size:12px"><b>Status:</b> ${o.payment_status}</div>
       </div>
     </div>
-    <div style="background:#fafafa;border-radius:6px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between">
-      <div><div style="font-size:11px;color:#aaa;margin-bottom:2px">BILL TO</div>
-        <div style="font-weight:700;font-size:15px">${o.customer}</div>
-        ${o.customer_gstin?`<div style="font-size:12px;color:#888">GSTIN: ${o.customer_gstin}</div>`:''}
-      </div>
+    <div style="background:#fafafa;border-radius:6px;padding:12px 16px;margin-bottom:20px">
+      <div style="font-size:11px;color:#aaa">BILL TO</div>
+      <div style="font-weight:700;font-size:15px">${o.customer}</div>
+      ${o.customer_gstin?`<div style="font-size:12px;color:#888">GSTIN: ${o.customer_gstin}</div>`:''}
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
       <thead><tr style="background:#6c3fc5;color:#fff">
-        <th style="padding:9px 12px;text-align:left">#</th>
-        <th style="padding:9px 12px;text-align:left">Item</th>
-        <th style="padding:9px 12px;text-align:left">SKU</th>
-        <th style="padding:9px 12px;text-align:center">Qty</th>
-        <th style="padding:9px 12px;text-align:right">Rate (₹)</th>
-        <th style="padding:9px 12px;text-align:right">Amount (₹)</th>
+        <th style="padding:9px 12px">#</th><th style="padding:9px 12px">Item</th><th style="padding:9px 12px">SKU</th>
+        <th style="padding:9px 12px;text-align:center">Qty</th><th style="padding:9px 12px;text-align:right">Rate</th><th style="padding:9px 12px;text-align:right">Amount</th>
       </tr></thead>
       <tbody>${si.map((it,i)=>`<tr style="border-bottom:1px solid #eee">
         <td style="padding:9px 12px;color:#aaa">${i+1}</td>
@@ -1079,21 +766,18 @@ function printSale(id){
         <td style="padding:9px 12px;text-align:right">₹${Number(it.amount||it.qty*it.price).toFixed(2)}</td>
       </tr>`).join('')}</tbody>
     </table>
-    <div style="display:flex;justify-content:flex-end">
-      <div style="width:260px">
-        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #eee"><span style="color:#777">Subtotal</span><span>₹${sub.toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #eee"><span style="color:#777">GST (${o.gst_rate||5}%)</span><span>₹${gst.toFixed(2)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:800;color:#6c3fc5"><span>TOTAL</span><span>₹${total.toFixed(2)}</span></div>
-      </div>
-    </div>
-    <div style="margin-top:24px;border-top:1px solid #eee;padding-top:14px;display:flex;justify-content:space-between;font-size:11px;color:#aaa">
-      <span>Thank you for your business!</span>
-      <span>${settings.company_name} | GSTIN: ${settings.company_gst}</span>
+    <div style="display:flex;justify-content:flex-end"><div style="width:250px">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #eee"><span style="color:#777">Subtotal</span><span>₹${Number(o.subtotal||0).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid #eee"><span style="color:#777">GST (${o.gst_rate||5}%)</span><span>₹${Number(o.gst||0).toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:17px;font-weight:800;color:#6c3fc5"><span>TOTAL</span><span>₹${Number(o.total||0).toFixed(2)}</span></div>
+    </div></div>
+    <div style="margin-top:20px;border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#aaa;text-align:center">
+      Thank you for your business! — ${settings.company_name} | GSTIN: ${settings.company_gst}
     </div>`;
   document.getElementById('print-modal').style.display='flex';
 }
 
-// ── CHALLANS PAGE ─────────────────────────────────────
+// ── CHALLANS ──────────────────────────────────────────
 let challanRows=[];
 function renderChallansPage(){
   document.getElementById('pg-challans').innerHTML=`
@@ -1101,164 +785,136 @@ function renderChallansPage(){
   <div class="card">
     <div class="card-title">New Delivery Challan</div>
     <div class="form-grid">
-      <div class="fg"><label>Customer / Party Name *</label><input id="cc-cust" placeholder="Party name"/></div>
-      <div class="fg"><label>Customer Address</label><input id="cc-addr" placeholder="Delivery address"/></div>
+      <div class="fg"><label>Party Name *</label><input id="cc-cust" placeholder="Customer / Party naam"/></div>
+      <div class="fg"><label>Delivery Address</label><input id="cc-addr" placeholder="Address"/></div>
       <div class="fg"><label>Date</label><input id="cc-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
-      <div class="fg"><label>Prepared By</label><input id="cc-created-by" placeholder="Challan created by" value="${settings.operator}"/></div>
       <div class="fg"><label>Purpose</label>
-        <select id="cc-purpose">
-          <option>Sale</option><option>Return</option><option>Job Work</option>
-          <option>Sample</option><option>Repair</option><option>Other</option>
-        </select>
+        <select id="cc-purpose"><option>Sale</option><option>Return</option><option>Job Work</option><option>Sample</option><option>Repair</option><option>Other</option></select>
       </div>
-      <div class="fg"><label>Color</label><input id="cc-color" placeholder="e.g., Red, Blue"/></div>
-      <div class="fg" style="grid-column:1/-1"><label>Remarks</label><input id="cc-remarks" placeholder="Optional remarks"/></div>
+      <div class="fg"><label>Color</label><input id="cc-color" placeholder="e.g. Red, Blue"/></div>
+      <div class="fg"><label>Prepared By</label><input id="cc-by" value="${settings.operator}"/></div>
+      <div class="fg" style="grid-column:1/-1"><label>Remarks</label><input id="cc-remarks" placeholder="Optional"/></div>
     </div>
-    <div id="recent-parties-challans" style="font-size:12px;color:#555;margin-top:10px"></div>
-
-    <div style="margin-bottom:8px">
-      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:4px">
-        <span style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase">Item</span>
-        <span style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase">Qty</span>
-        <span style="font-size:11px;color:#888;font-weight:600;text-transform:uppercase">Remarks</span>
-        <span></span>
-      </div>
-      <div id="challan-rows-container"></div>
-      <button class="btn btn-secondary" style="margin-top:6px" onclick="addChallanRow()">+ Add Item</button>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:#888;font-weight:600">ITEM</span>
+      <span style="font-size:11px;color:#888;font-weight:600">QTY</span>
+      <span style="font-size:11px;color:#888;font-weight:600">REMARKS</span>
+      <span></span>
     </div>
-
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-success" onclick="submitChallan()">Create Challan</button>
+    <div id="challan-rows-container"></div>
+    <button class="btn btn-secondary" style="margin-top:6px" onclick="addChallanRow()">+ Add Item</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-success" onclick="submitChallan()">💾 Create Challan</button>
       <button class="btn btn-secondary" onclick="resetChallanForm()">Clear</button>
     </div>
-    <div id="challan-err" style="color:#c0392b;font-size:12px;margin-top:8px"></div>
+    <div id="challan-err" style="color:#c0392b;font-size:13px;margin-top:8px;font-weight:600"></div>
   </div>
-
-  <div class="page-title" style="margin-top:8px">All Challans
-    <input class="search-input" id="ch-q" placeholder="🔍 Search challans..." oninput="filterChallans()" style="width:240px;font-size:13px"/>
+  <div class="page-title">All Challans
+    <input class="search-input" id="ch-q" placeholder="🔍 Search..." oninput="filterChallans()" style="width:240px;font-size:13px"/>
   </div>
   <div id="challans-list"></div>`;
-
-  challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,remarks:''}];
-  renderChallanRows();
-  renderPartySuggestions('challans');
-  filterChallans();
+  challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,unit:'pcs',remarks:''}];
+  renderChallanRows();filterChallans();
 }
 
 function renderChallanRows(){
-  const c=document.getElementById('challan-rows-container');
-  if(!c) return;
-  c.innerHTML=challanRows.map((row,idx)=>`
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:8px;align-items:end" id="cr-${row.id}">
+  const c=document.getElementById('challan-rows-container');if(!c) return;
+  c.innerHTML=challanRows.map(row=>`
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:8px;align-items:end">
       <div class="search-dropdown-wrap">
-        <input placeholder="Item search karo..." id="cri-${row.id}" value="${row.itemName||''}" oninput="searchItemDropC('${row.id}','cri-${row.id}','crd-${row.id}')" autocomplete="off" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
+        <input placeholder="Item naam search karo..." id="cri-${row.id}" value="${row.itemName||''}"
+          oninput="searchChallanDrop(${row.id},'cri-${row.id}','crd-${row.id}')"
+          autocomplete="off" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
         <div id="crd-${row.id}" class="item-dropdown" style="display:none"></div>
       </div>
-      <input type="number" value="${row.qty}" min="1" onchange="updateChallanRow('${row.id}','qty',this.value)" style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
-      <input value="${row.remarks||''}" placeholder="Remarks" onchange="updateChallanRow('${row.id}','remarks',this.value)" style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;background:#fdfcff;font-size:13px"/>
-      <button class="btn btn-danger btn-sm" style="padding:8px 10px" onclick="removeChallanRow('${row.id}')">✕</button>
+      <input type="number" id="crq-${row.id}" value="${row.qty}" min="1"
+        onchange="updateChallanRow(${row.id},'qty',this.value)"
+        style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+      <input id="crr-${row.id}" value="${row.remarks||''}" placeholder="Remarks"
+        onchange="updateChallanRow(${row.id},'remarks',this.value)"
+        style="padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+      <button class="btn btn-danger btn-sm" style="padding:8px 10px" onclick="removeChallanRow(${row.id})">✕</button>
     </div>`).join('');
 }
 
-function searchItemDropC(rowId,inputId,dropId){
-  const q=document.getElementById(inputId).value.toLowerCase();
+function searchChallanDrop(rowId,inputId,dropId){
+  const q=(document.getElementById(inputId)?.value||'').toLowerCase();
   const drop=document.getElementById(dropId);
-  if(q.length<1){drop.style.display='none';return;}
-  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)).slice(0,8);
+  if(!q){drop.style.display='none';return;}
+  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)).slice(0,8);
   if(!matches.length){drop.style.display='none';return;}
-  drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectItemForChallan('${rowId}',${i.id},'${inputId}','${dropId}')">
-    ${i.name}<span class="item-sku">${i.sku||''}</span><span class="item-stock">Stock: ${i.qty} ${i.unit}</span>
+  drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectChallanItem(${rowId},${i.id},'${inputId}','${dropId}')">
+    ${i.name}<span class="item-sku">${i.sku||''}</span>
+    <span class="item-stock">Stock: ${i.qty} ${i.unit}</span>
   </div>`).join('');
   drop.style.display='block';
 }
 
-function selectItemForChallan(rowId,itemId,inputId,dropId){
-  const it=items.find(x=>x.id===itemId);
-  if(!it) return;
+function selectChallanItem(rowId,itemId,inputId,dropId){
+  const it=items.find(x=>x.id===itemId);if(!it) return;
   const row=challanRows.find(r=>r.id==rowId);
-  if(row){row.itemId=itemId;row.itemName=it.name;row.unit=it.set_size>1?'sets':it.unit;}
+  if(row){row.itemId=itemId;row.itemName=it.name;row.unit=it.unit;}
   document.getElementById(inputId).value=it.name;
   document.getElementById(dropId).style.display='none';
 }
 
-function addChallanRow(){challanRows.push({id:Date.now(),itemId:'',itemName:'',qty:1,remarks:''});renderChallanRows();}
-function removeChallanRow(id){if(challanRows.length===1)return;challanRows=challanRows.filter(r=>r.id!=id);renderChallanRows();}
-function updateChallanRow(id,field,val){const r=challanRows.find(x=>x.id==id);if(r)r[field]=field==='qty'?Number(val):val;}
+function addChallanRow(){challanRows.push({id:Date.now(),itemId:'',itemName:'',qty:1,unit:'pcs',remarks:''});renderChallanRows();}
+function removeChallanRow(id){if(challanRows.length===1) return;challanRows=challanRows.filter(r=>r.id!=id);renderChallanRows();}
+function updateChallanRow(id,field,val){const r=challanRows.find(x=>x.id==id);if(r) r[field]=field==='qty'?Number(val):val;}
 
 async function submitChallan(){
+  const errEl=document.getElementById('challan-err');
+  errEl.style.color='#c0392b';errEl.textContent='';
   const cust=document.getElementById('cc-cust').value.trim();
-  const err=document.getElementById('challan-err');
-  err.textContent='';
-  if(!cust){err.textContent='Party name zaroori hai.';return;}
-  const normalizedRows = [];
-  for(const r of challanRows){
-    const row={...r,qty:Number(r.qty)||0};
-    if(!row.itemId && row.itemName){
-      const found=items.find(i=>
-        i.id===row.itemId ||
-        (i.name||'').toLowerCase()===row.itemName.toLowerCase() ||
-        (i.sku||'').toLowerCase()===row.itemName.toLowerCase() ||
-        (i.item_code||'').toLowerCase()===row.itemName.toLowerCase()
-      );
-      if(found){
-        row.itemId=found.id;
-        row.itemName=found.name;
-        row.unit=found.set_size>1?'sets':found.unit;
-      }
-    }
-    if(row.itemId&&row.qty>0){
-      normalizedRows.push(row);
-    }
-  }
-  const rows=normalizedRows;
-  if(!rows.length){err.textContent='Kam se kam ek valid item select karo (dropdown se select karo).';return;}
-  const challanNo='CHN-'+String(Date.now()).slice(-6);
-  const color=document.getElementById('cc-color').value.trim();
-  const createdBy=document.getElementById('cc-created-by').value.trim()||settings.operator;
-  const payload={
-    challan_no:challanNo,customer:cust,
-    customer_address:document.getElementById('cc-addr').value.trim(),
-    challan_date:document.getElementById('cc-date').value,
-    purpose:document.getElementById('cc-purpose').value,
-    remarks:document.getElementById('cc-remarks').value.trim()
-  };
-  if(DB_SCHEMA.color) payload.color=color;
-  if(DB_SCHEMA.created_by) payload.created_by=createdBy;
-
-  try {
-    const {data:ch,error:challanError}=await sb.from('challans').insert(payload).select().single();
-    if(challanError) throw challanError;
-    if(ch){
-      const {error:itemError}=await sb.from('challan_items').insert(rows.map(r=>({
-        challan_id:ch.id,item_id:r.itemId,item_name:r.itemName,
-        sku:items.find(i=>i.id===r.itemId)?.sku||'',
-        qty:r.qty,unit:r.unit||'pcs',remarks:r.remarks||''
-      })));
-      if(itemError) throw itemError;
-    }
-    resetChallanForm();
-    await loadAll();
-  } catch(err) {
-    console.error('Challan submission failed', err);
-    const message = err.message || err.error_description || JSON.stringify(err);
-    document.getElementById('challan-err').textContent = `Error: ${message}`;
-    alert(`Challan save failed: ${message}`);
+  if(!cust){errEl.textContent='❌ Party name zaroori hai!';return;}
+  const validRows=challanRows.filter(r=>r.itemId&&Number(r.qty)>0);
+  if(!validRows.length){errEl.textContent='❌ Kam se kam ek item dropdown se select karo!';return;}
+  const challanNo='CHN-'+Date.now().toString().slice(-6);
+  errEl.textContent='⏳ Saving...';
+  try{
+    const payload={
+      challan_no:challanNo,
+      customer:cust,
+      customer_address:document.getElementById('cc-addr').value.trim(),
+      challan_date:document.getElementById('cc-date').value,
+      purpose:document.getElementById('cc-purpose').value,
+      remarks:document.getElementById('cc-remarks').value.trim(),
+      color:document.getElementById('cc-color').value.trim(),
+      created_by:document.getElementById('cc-by').value.trim()||settings.operator
+    };
+    const{data:ch,error:e1}=await sb.from('challans').insert(payload).select().single();
+    if(e1) throw e1;
+    const ciPayload=validRows.map(r=>({
+      challan_id:ch.id,
+      item_id:Number(r.itemId),
+      item_name:r.itemName,
+      sku:items.find(i=>i.id===r.itemId)?.sku||'',
+      qty:Number(r.qty),
+      unit:r.unit||'pcs',
+      remarks:r.remarks||''
+    }));
+    const{error:e2}=await sb.from('challan_items').insert(ciPayload);
+    if(e2) throw e2;
+    errEl.style.color='#27ae60';errEl.textContent='✅ Challan saved successfully!';
+    setTimeout(()=>{errEl.textContent='';errEl.style.color='#c0392b';},3000);
+    resetChallanForm();await loadAll();
+  }catch(e){
+    console.error('Challan error full:',e);
+    errEl.textContent='❌ Error: '+(e.message||JSON.stringify(e));
   }
 }
 
 function resetChallanForm(){
-  ['cc-cust','cc-addr','cc-remarks','cc-color'].forEach(id=>{document.getElementById(id).value='';});
-  document.getElementById('challan-err').textContent='';
-  challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,remarks:''}];
+  ['cc-cust','cc-addr','cc-remarks','cc-color'].forEach(id=>document.getElementById(id).value='');
+  challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,unit:'pcs',remarks:''}];
   renderChallanRows();
 }
 
 function filterChallans(){
   const q=(document.getElementById('ch-q')?.value||'').toLowerCase();
-  const filtered=challans.filter(c=>c.challan_no?.toLowerCase().includes(q)||c.customer?.toLowerCase().includes(q)||c.color?.toLowerCase().includes(q)||c.created_by?.toLowerCase().includes(q));
-  document.getElementById('challans-list').innerHTML=filtered.map(ch=>{
-    const ci=ch.challan_items||[];
-    return`<div class="order-card challan">
+  const list=challans.filter(c=>c.challan_no?.toLowerCase().includes(q)||c.customer?.toLowerCase().includes(q));
+  document.getElementById('challans-list').innerHTML=list.map(ch=>`
+    <div class="order-card challan">
       <div class="order-header">
         <div>
           <span style="font-weight:700;font-size:14px">${ch.challan_no}</span>
@@ -1267,23 +923,19 @@ function filterChallans(){
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-size:12px;color:#aaa">${ch.challan_date}</span>
-          <span style="font-size:12px;color:#aaa">${ci.length} items</span>
           <button class="btn-challan" onclick="printChallan(${ch.id})">🖨️ Challan</button>
         </div>
       </div>
-      <div style="font-size:12px;color:#777;margin-top:6px">Created by: ${ch.created_by||settings.operator}${ch.color?` | Color: ${ch.color}`:''}</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px">${ci.map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px">${(ch.challan_items||[]).map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
       ${ch.remarks?`<div style="font-size:11px;color:#bbb;margin-top:3px">📝 ${ch.remarks}</div>`:''}
-    </div>`;
-  }).join('')||'<div style="text-align:center;padding:30px;color:#ccc">Koi challan nahi</div>';
+    </div>`).join('')||'<div style="text-align:center;padding:30px;color:#ccc">Koi challan nahi</div>';
 }
 
 function printChallan(id){
-  const ch=challans.find(c=>c.id===id);
-  if(!ch) return;
+  const ch=challans.find(c=>c.id===id);if(!ch) return;
   const ci=ch.challan_items||[];
   document.getElementById('print-content').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #1abc9c">
+    <div style="display:flex;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #1abc9c">
       <div>
         <div style="background:#6c3fc5;color:#fff;display:inline-block;padding:6px 16px;border-radius:6px;font-weight:800;font-size:22px;letter-spacing:2px">STYLEYS</div>
         <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${settings.company_name}</div>
@@ -1292,27 +944,26 @@ function printChallan(id){
       </div>
       <div style="text-align:right">
         <div style="font-size:20px;font-weight:800;color:#1abc9c">DELIVERY CHALLAN</div>
-        <div style="font-size:14px;color:#555;margin-top:4px"><b>${ch.challan_no}</b></div>
+        <div style="font-size:14px;color:#555"><b>${ch.challan_no}</b></div>
         <div style="font-size:12px;color:#888">Date: ${ch.challan_date}</div>
         <div style="margin-top:6px;padding:5px 12px;background:#e8f8f5;border-radius:6px;font-size:12px;color:#1abc9c;font-weight:600">${ch.purpose}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
       <div style="background:#fafafa;border-radius:6px;padding:12px 16px">
-        <div style="font-size:11px;color:#aaa;margin-bottom:4px">CONSIGNEE / BILL TO</div>
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px">CONSIGNEE</div>
         <div style="font-weight:700;font-size:15px">${ch.customer}</div>
         ${ch.customer_address?`<div style="font-size:12px;color:#888;margin-top:3px">${ch.customer_address}</div>`:''}
       </div>
-      ${ch.remarks?`<div style="background:#fafafa;border-radius:6px;padding:12px 16px"><div style="font-size:11px;color:#aaa;margin-bottom:4px">REMARKS</div><div style="font-size:13px;color:#555">${ch.remarks}</div></div>`:'<div></div>'}
+      <div style="background:#fafafa;border-radius:6px;padding:12px 16px">
+        <div style="font-size:11px;color:#aaa;margin-bottom:4px">REMARKS</div>
+        <div style="font-size:13px;color:#555">${ch.remarks||'-'}</div>
+      </div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px">
       <thead><tr style="background:#1abc9c;color:#fff">
-        <th style="padding:9px 12px;text-align:left">#</th>
-        <th style="padding:9px 12px;text-align:left">Item Description</th>
-        <th style="padding:9px 12px;text-align:left">SKU</th>
-        <th style="padding:9px 12px;text-align:center">Quantity</th>
-        <th style="padding:9px 12px;text-align:left">Unit</th>
-        <th style="padding:9px 12px;text-align:left">Remarks</th>
+        <th style="padding:9px 12px">#</th><th style="padding:9px 12px">Item</th><th style="padding:9px 12px">SKU</th>
+        <th style="padding:9px 12px;text-align:center">Qty</th><th style="padding:9px 12px">Unit</th><th style="padding:9px 12px">Remarks</th>
       </tr></thead>
       <tbody>${ci.map((it,i)=>`<tr style="border-bottom:1px solid #eee">
         <td style="padding:9px 12px;color:#aaa">${i+1}</td>
@@ -1323,27 +974,58 @@ function printChallan(id){
         <td style="padding:9px 12px;color:#888;font-size:12px">${it.remarks||'-'}</td>
       </tr>`).join('')}</tbody>
     </table>
-    <div style="margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;color:#888">
-      <div style="border-top:1px solid #ccc;padding-top:8px;text-align:center">Receiver's Signature & Stamp</div>
-      <div style="border-top:1px solid #ccc;padding-top:8px;text-align:center">For ${settings.company_name}<br><br>Authorised Signatory</div>
+    <div style="margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;color:#888;text-align:center">
+      <div style="border-top:1px solid #ccc;padding-top:8px">Receiver's Signature</div>
+      <div style="border-top:1px solid #ccc;padding-top:8px">For ${settings.company_name}<br><br>Authorised Signatory</div>
     </div>
-    <div style="margin-top:20px;border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#aaa;text-align:center">
-      This is a computer generated delivery challan — ${settings.company_name} | GSTIN: ${settings.company_gst}
+    <div style="margin-top:16px;border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#aaa;text-align:center">
+      Computer generated challan — ${settings.company_name} | GSTIN: ${settings.company_gst}
     </div>`;
   document.getElementById('print-modal').style.display='flex';
 }
 
-// ── AI INSIGHTS ───────────────────────────────────────
+// ── SETTINGS ──────────────────────────────────────────
+function renderSettingsPage(){
+  const el=document.getElementById('pg-settings');if(!el) return;
+  el.innerHTML=`
+  <div class="page-title">Settings</div>
+  <div class="card">
+    <div class="card-title">Company Details</div>
+    <div class="form-grid">
+      <div class="fg"><label>Company Name</label><input id="st-name" value="${settings.company_name}"/></div>
+      <div class="fg"><label>GSTIN</label><input id="st-gst" value="${settings.company_gst}"/></div>
+      <div class="fg"><label>Address</label><input id="st-address" value="${settings.company_address}"/></div>
+      <div class="fg"><label>Email</label><input id="st-email" value="${settings.company_email}"/></div>
+      <div class="fg" style="grid-column:1/-1"><label>Operator Name</label><input id="st-op" value="${settings.operator}"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    <span id="settings-msg" style="margin-left:12px;font-size:13px;color:#27ae60"></span>
+  </div>`;
+}
+
+function saveSettings(){
+  settings.company_name=document.getElementById('st-name').value.trim()||settings.company_name;
+  settings.company_address=document.getElementById('st-address').value.trim()||settings.company_address;
+  settings.company_gst=document.getElementById('st-gst').value.trim()||settings.company_gst;
+  settings.company_email=document.getElementById('st-email').value.trim()||settings.company_email;
+  settings.operator=document.getElementById('st-op').value.trim()||settings.operator;
+  ['company_name','company_address','company_gst','company_email'].forEach(k=>localStorage.setItem(k,settings[k]));
+  localStorage.setItem('operator_name',settings.operator);
+  document.getElementById('settings-msg').textContent='✅ Saved!';
+  setTimeout(()=>document.getElementById('settings-msg').textContent='',3000);
+}
+
+// ── AI ────────────────────────────────────────────────
 function renderAiPage(){
   document.getElementById('pg-ai').innerHTML=`
-  <div class="page-title">AI Insights — Powered by Claude</div>
+  <div class="page-title">AI Insights</div>
   <div class="ai-insight-box">
-    <p style="font-size:13px;color:#888;margin-bottom:14px">Apne inventory, sales aur challan data ke basis pe intelligent business insights pao. Claude AI real data analyze karke actionable recommendations deta hai.</p>
+    <p style="font-size:13px;color:#888;margin-bottom:14px">Real data ke basis pe Claude AI se business insights lo.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-primary" onclick="getAI('inventory')">📦 Inventory Analysis</button>
-      <button class="btn btn-secondary" onclick="getAI('sales')">📈 Sales Insights</button>
-      <button class="btn btn-secondary" onclick="getAI('reorder')">🔄 Reorder Suggestions</button>
-      <button class="btn btn-secondary" onclick="getAI('full')">🧠 Full Business Report</button>
+      <button class="btn btn-primary" onclick="getAI('inventory')">📦 Inventory</button>
+      <button class="btn btn-secondary" onclick="getAI('sales')">📈 Sales</button>
+      <button class="btn btn-secondary" onclick="getAI('reorder')">🔄 Reorder</button>
+      <button class="btn btn-secondary" onclick="getAI('full')">🧠 Full Report</button>
     </div>
     <div id="ai-out"></div>
   </div>`;
@@ -1351,31 +1033,24 @@ function renderAiPage(){
 
 async function getAI(type){
   const out=document.getElementById('ai-out');
-  out.innerHTML=`<div class="ai-thinking"><div class="spinner"></div>Claude AI analyze kar raha hai...</div>`;
-
+  out.innerHTML=`<div class="ai-thinking"><div class="spinner"></div>Claude analyze kar raha hai...</div>`;
   const prompts={
-    inventory:`You are a business analyst for Styleys India LLP, a clothing/textile company in India. Analyze this inventory data and give 5 specific insights in Hinglish (mix of Hindi and English). Focus on dead stock, fast moving items, and optimization.\n\nInventory: ${JSON.stringify(items.map(i=>({name:i.name,sku:i.sku,category:i.category,qty:i.qty,threshold:i.threshold,price:i.price,unit:i.unit})))}`,
-    sales:`Analyze the sales data for Styleys India LLP and give 5 business insights in Hinglish. Focus on top customers, revenue trends, and payment patterns.\n\nSales: ${JSON.stringify(sales.slice(0,20).map(o=>({order:o.order_no,customer:o.customer,date:o.sale_date,total:o.total,status:o.payment_status})))}`,
-    reorder:`Based on inventory levels and sales history, give specific reorder recommendations for Styleys India LLP in Hinglish. Be specific about quantities and priority.\n\nInventory: ${JSON.stringify(items.map(i=>({name:i.name,qty:i.qty,threshold:i.threshold,unit:i.unit,price:i.price})))}\n\nRecent Sales: ${JSON.stringify(sales.slice(0,10).map(o=>({date:o.sale_date,items:o.sale_items?.map(i=>({name:i.item_name,qty:i.qty}))})))}`,
-    full:`Give a comprehensive business report for Styleys India LLP in Hinglish with: 1) Inventory health, 2) Sales performance, 3) Cash flow insights, 4) Top recommendations, 5) Risk alerts.\n\nInventory: ${JSON.stringify(items.map(i=>({name:i.name,qty:i.qty,threshold:i.threshold,price:i.price,category:i.category})))}\nSales (last 20): ${JSON.stringify(sales.slice(0,20).map(o=>({date:o.sale_date,customer:o.customer,total:o.total,status:o.payment_status})))}\nChallans: ${challans.length} total challans`
+    inventory:`Styleys India LLP inventory analyze karo (Hinglish mein 5 insights): ${JSON.stringify(items.map(i=>({name:i.name,sku:i.sku,category:i.category,qty:i.qty,threshold:i.threshold,price:i.price})))}`,
+    sales:`Sales data analyze karo Hinglish mein: ${JSON.stringify(sales.slice(0,20).map(o=>({order:o.order_no,customer:o.customer,date:o.sale_date,total:o.total,status:o.payment_status})))}`,
+    reorder:`Reorder suggestions do Hinglish mein — Inventory: ${JSON.stringify(items.map(i=>({name:i.name,qty:i.qty,threshold:i.threshold,unit:i.unit})))}, Sales: ${JSON.stringify(sales.slice(0,10).map(o=>({items:o.sale_items?.map(i=>({name:i.item_name,qty:i.qty}))})))}`,
+    full:`Full business report Styleys India LLP ke liye Hinglish mein — Inventory: ${JSON.stringify(items.map(i=>({name:i.name,qty:i.qty,price:i.price,category:i.category})))}, Sales: ${JSON.stringify(sales.slice(0,20).map(o=>({date:o.sale_date,customer:o.customer,total:o.total,status:o.payment_status})))}`
   };
-
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1500,
-        system:'You are a senior business analyst specializing in Indian textile and fashion businesses. Provide specific, actionable insights. Use Hinglish (Hindi + English mix) for responses. Format with clear sections and bullet points. Be concise but comprehensive.',
-        messages:[{role:'user',content:prompts[type]}]
-      })
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+        system:'Senior business analyst for Indian textile/fashion. Hinglish mein jawab do. Clear sections aur bullet points use karo.',
+        messages:[{role:'user',content:prompts[type]}]})
     });
     const data=await res.json();
-    const text=data.content?.[0]?.text||'Koi insights nahi mili.';
-    out.innerHTML=`<div class="ai-insight-text">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/\*(.*?)\*/g,'<i>$1</i>')}</div>`;
+    out.innerHTML=`<div class="ai-insight-text">${(data.content?.[0]?.text||'Koi insights nahi mili.').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')}</div>`;
   }catch(e){
-    out.innerHTML=`<div class="alert alert-danger" style="margin-top:14px">Error aa gaya. Please try again. (${e.message})</div>`;
+    out.innerHTML=`<div class="alert alert-danger" style="margin-top:14px">Error: ${e.message}</div>`;
   }
 }
 </script>
