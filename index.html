@@ -946,21 +946,18 @@ function renderSalesReportPage(){
       monthlySKUData[item.sku].data[month]=qty;
     }
   }
-  document.getElementById('pg-reports').innerHTML=`
-  <div class="page-title">Monthly Sales Report</div>
-  <div class="tbl-wrap">
-    <table>
-      <thead><tr><th>SKU</th><th>Product Name</th>${all12Months.map(m=>\`<th>\${m}</th>\`).join('')}<th>Total</th><th>Avg/Month</th></tr></thead>
-      <tbody>
-        ${Object.entries(monthlySKUData).map(([sku,{name,data}])=>{
-          const totalSales=Object.values(data).reduce((a,b)=>a+b,0);
-          const avgMonthly=(totalSales/12).toFixed(0);
-          return \`<tr><td><b>\${sku}</b></td><td>\${name}</td>\${all12Months.map(m=>\`<td>\${data[m]||0}</td>\`).join('')}<td style="font-weight:600">\${totalSales}</td><td>\${avgMonthly}</td></tr>\`;
-        }).join('')}
-      </tbody>
-    </table>
-  </div>
-  `;
+  let html=`<div class="page-title">Monthly Sales Report</div><div class="tbl-wrap"><table><thead><tr><th>SKU</th><th>Product Name</th>`;
+  all12Months.forEach(m=>html+=`<th>${m}</th>`);
+  html+=`<th>Total</th><th>Avg/Month</th></tr></thead><tbody>`;
+  Object.entries(monthlySKUData).forEach(([sku,{name,data}])=>{
+    const totalSales=Object.values(data).reduce((a,b)=>a+b,0);
+    const avgMonthly=(totalSales/12).toFixed(0);
+    html+=`<tr><td><b>${sku}</b></td><td>${name}</td>`;
+    all12Months.forEach(m=>html+=`<td>${data[m]||0}</td>`);
+    html+=`<td style="font-weight:600">${totalSales}</td><td>${avgMonthly}</td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  document.getElementById('pg-reports').innerHTML=html;
 }
 
 async function togglePayment(id,current){
