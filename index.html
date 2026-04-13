@@ -951,8 +951,9 @@ async function submitSale(){
     await loadAll();
   } catch(err) {
     console.error('Sale submission failed', err);
-    err = err.message || JSON.stringify(err);
-    document.getElementById('sale-err').textContent = `Error: ${err}`;
+    const message = err.message || err.error_description || JSON.stringify(err);
+    document.getElementById('sale-err').textContent = `Error: ${message}`;
+    alert(`Sale save failed: ${message}`);
   }
 }
 
@@ -1219,8 +1220,9 @@ async function submitChallan(){
     await loadAll();
   } catch(err) {
     console.error('Challan submission failed', err);
-    const message = err.message || JSON.stringify(err);
+    const message = err.message || err.error_description || JSON.stringify(err);
     document.getElementById('challan-err').textContent = `Error: ${message}`;
+    alert(`Challan save failed: ${message}`);
   }
 }
 
