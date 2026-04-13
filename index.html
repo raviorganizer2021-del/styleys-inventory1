@@ -276,6 +276,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
 
 <script>
 let sb=null, items=[], sales=[], challans=[], editingItemId=null;
+let challanCounter=null; // auto-increment challan number
 const CATS=['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
 let settings={
   company_name:'Styleys India LLP',
@@ -541,23 +542,50 @@ function handleCSV(file){
 }
 
 async function importCSV(rows){
-  let ok=0,err=0;
+  let ok=0,err=0,errMsgs=[];
   for(const r of rows){
     if(!r.name) continue;
-    const data={item_code:r.item_code||'',sku:r.sku||'',name:r.name,category:r.category||'Fabric',
-      qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,unit:r.unit||'pcs',
+    // Extract monthly sales from columns like 2026-01, 2026-02 etc.
+    const ms={};
+    Object.keys(r).forEach(k=>{
+      if(/^\d{4}-\d{2}$/.test(k.trim())&&r[k]!==''&&r[k]!=null)
+        ms[k.trim()]=Number(r[k])||0;
+    });
+    const data={
+      item_code:r.item_code||'',sku:r.sku||'',name:r.name,
+      category:r.category||'Fabric',qty:Number(r.qty)||0,
+      threshold:Number(r.threshold)||10,unit:r.unit||'pcs',
       price:Number(r.price)||0,hsn:r.hsn||'',location:r.location||'',
-      set_size:Number(r.set_size)||1,monthly_sales:'{}'};
-    const{error}=await sb.from('items').insert(data);
-    if(error) err++; else ok++;
+      set_size:Number(r.set_size)||1,
+      monthly_sales:Object.keys(ms).length?JSON.stringify(ms):'{}'
+    };
+    // Upsert by SKU if exists
+    const existing=items.find(i=>i.sku&&i.sku===data.sku);
+    let error;
+    if(existing){
+      // Merge monthly sales
+      let existMs={};try{existMs=JSON.parse(existing.monthly_sales||'{}')}catch(e){}
+      const merged={...existMs,...ms};
+      ({error}=await sb.from('items').update({...data,monthly_sales:JSON.stringify(merged)}).eq('id',existing.id));
+    } else {
+      ({error}=await sb.from('items').insert(data));
+    }
+    if(error){err++;errMsgs.push(r.name+': '+error.message);}else ok++;
   }
-  document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-success">✅ ${ok} imported${err>0?`, ${err} errors`:''}</div>`;
+  document.getElementById('bulk-preview').innerHTML=
+    `<div class="alert alert-success">✅ ${ok} imported/updated${err>0?`<br>❌ ${err} errors: ${errMsgs.join(', ')}`:''}</div>`;
   await loadAll();
 }
 
 function downloadSample(){
-  const csv='item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\nITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1';
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='styleys_sample.csv';a.click();
+  // Build last 6 months headers
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const mHeaders=months.join(',');
+  const mVals1=months.map((_,i)=>[50,60,45,70,55,80][i]).join(',');
+  const mVals2=months.map((_,i)=>[120,110,130,100,140,115][i]).join(',');
+  const csv=`item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size,${mHeaders}\nITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1,${mVals1}\nITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1,${mVals2}`;
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='styleys_sample_with_monthly_sales.csv';a.click();
 }
 
 // ── SALES ─────────────────────────────────────────────
@@ -782,6 +810,7 @@ let challanRows=[];
 function renderChallansPage(){
   document.getElementById('pg-challans').innerHTML=`
   <div class="page-title">Delivery Challans</div>
+  ${renderChallanNoSettings()}
   <div class="card">
     <div class="card-title">New Delivery Challan</div>
     <div class="form-grid">
@@ -862,6 +891,39 @@ function addChallanRow(){challanRows.push({id:Date.now(),itemId:'',itemName:'',q
 function removeChallanRow(id){if(challanRows.length===1) return;challanRows=challanRows.filter(r=>r.id!=id);renderChallanRows();}
 function updateChallanRow(id,field,val){const r=challanRows.find(x=>x.id==id);if(r) r[field]=field==='qty'?Number(val):val;}
 
+function getNextChallanNo(){
+  const prefix=localStorage.getItem('challan_prefix')||'CHN';
+  let num=parseInt(localStorage.getItem('challan_counter')||'0',10)+1;
+  localStorage.setItem('challan_counter',num);
+  return `${prefix}-${String(num).padStart(4,'0')}`;
+}
+
+function renderChallanNoSettings(){
+  const prefix=localStorage.getItem('challan_prefix')||'CHN';
+  const last=parseInt(localStorage.getItem('challan_counter')||'0',10);
+  const next=`${prefix}-${String(last+1).padStart(4,'0')}`;
+  return `<div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:12px;background:#f5f0ff;border-radius:8px;padding:12px">
+    <div class="fg" style="flex:1"><label>Challan Prefix</label>
+      <input id="ch-prefix" value="${prefix}" placeholder="e.g. CHN or DC" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+    </div>
+    <div class="fg" style="flex:1"><label>Start From Number</label>
+      <input id="ch-startno" type="number" value="${last}" placeholder="e.g. 100" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;font-size:13px"/>
+    </div>
+    <div>
+      <button class="btn btn-secondary" style="margin-bottom:2px" onclick="saveChallanCounter()">Set</button>
+    </div>
+    <div style="font-size:13px;color:#6c3fc5;font-weight:600;padding-bottom:4px">Next: <b>${next}</b></div>
+  </div>`;
+}
+
+function saveChallanCounter(){
+  const prefix=document.getElementById('ch-prefix').value.trim()||'CHN';
+  const num=parseInt(document.getElementById('ch-startno').value)||0;
+  localStorage.setItem('challan_prefix',prefix);
+  localStorage.setItem('challan_counter',num);
+  renderChallansPage();
+}
+
 async function submitChallan(){
   const errEl=document.getElementById('challan-err');
   errEl.style.color='#c0392b';errEl.textContent='';
@@ -869,7 +931,7 @@ async function submitChallan(){
   if(!cust){errEl.textContent='❌ Party name zaroori hai!';return;}
   const validRows=challanRows.filter(r=>r.itemId&&Number(r.qty)>0);
   if(!validRows.length){errEl.textContent='❌ Kam se kam ek item dropdown se select karo!';return;}
-  const challanNo='CHN-'+Date.now().toString().slice(-6);
+  const challanNo=getNextChallanNo();
   errEl.textContent='⏳ Saving...';
   try{
     const payload={
