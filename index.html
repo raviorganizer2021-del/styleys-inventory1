@@ -253,6 +253,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="nav-item" onclick="nav('bulk',this)"><span class="nav-icon">⬆️</span>Bulk Upload</div>
       <div class="nav-item" onclick="nav('sales',this)"><span class="nav-icon">🧾</span>Sales</div>
       <div class="nav-item" onclick="nav('challans',this)"><span class="nav-icon">🚚</span>Challans</div>
+      <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
       <div class="nav-item" onclick="nav('ai',this)"><span class="nav-icon">🤖</span>AI Insights</div>
     </div>
 
@@ -262,6 +263,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div id="pg-bulk" style="display:none"></div>
       <div id="pg-sales" style="display:none"></div>
       <div id="pg-challans" style="display:none"></div>
+      <div id="pg-settings" style="display:none"></div>
       <div id="pg-ai" style="display:none"></div>
     </div>
   </div>
@@ -283,6 +285,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
   <div class="modal-box">
     <div class="modal-title" id="item-modal-title">Add Item</div>
     <div class="form-grid">
+      <div class="fg"><label>Item Code</label><input id="fm-code" placeholder="e.g. ITM-001"/></div>
       <div class="fg"><label>SKU</label><input id="fm-sku"/></div>
       <div class="fg"><label>Name *</label><input id="fm-name"/></div>
       <div class="fg"><label>Category</label>
@@ -310,16 +313,21 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
 
 <script>
 let sb=null, items=[], sales=[], challans=[], editingItemId=null;
+let DB_SCHEMA={item_code:false,set_size:false,created_by:false,color:false};
+let settings={
+  company_name:'Styleys India LLP',
+  company_address:'New Delhi, India',
+  company_gst:'07AABCS1234Z1Z5',
+  company_email:'info@styleys.in',
+  operator:'Admin'
+};
 const CATS=['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
 const UNITS=['pcs','kg','meters','boxes','rolls','sets'];
-const GST_NO='07AABCS1234Z1Z5';
-const CO_NAME='Styleys India LLP';
-const CO_ADDR='New Delhi, India';
-const CO_EMAIL='info@styleys.in';
 
 // ── INIT ──────────────────────────────────────────────
 window.onload=()=>{
   document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  loadSettings();
   const u=localStorage.getItem('sb_url'), k=localStorage.getItem('sb_key');
   if(u&&k) launch(u,k); else document.getElementById('setup-screen').style.display='block';
 };
@@ -328,8 +336,10 @@ function connectDB(){
   if(!u||!k){document.getElementById('setup-err').textContent='Dono fields bharo.';return;}
   localStorage.setItem('sb_url',u); localStorage.setItem('sb_key',k); launch(u,k);
 }
-function launch(u,k){
+async function launch(u,k){
   sb=window.supabase.createClient(u,k);
+  await checkDbSchema();
+  loadSettings();
   document.getElementById('setup-screen').style.display='none';
   document.getElementById('app').style.display='block';
   loadAll();
@@ -344,17 +354,76 @@ async function loadAll(){
     sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false})
   ]);
   items=a.data||[]; sales=b.data||[]; challans=c.data||[];
-  renderDashboard(); renderInventoryPage(); renderSalesPage(); renderChallansPage();
+  renderDashboard(); renderInventoryPage(); renderSalesPage(); renderChallansPage(); renderSettingsPage();
 }
+
+async function checkDbColumn(table,column){
+  const {error}=await sb.from(table).select(`id,${column}`).limit(1);
+  return !error;
+}
+
+async function checkDbSchema(){
+  DB_SCHEMA.item_code = await checkDbColumn('items','item_code');
+  DB_SCHEMA.set_size = await checkDbColumn('items','set_size');
+  DB_SCHEMA.created_by = await checkDbColumn('sales','created_by') || await checkDbColumn('challans','created_by');
+  DB_SCHEMA.color = await checkDbColumn('sales','color') || await checkDbColumn('challans','color');
+}
+
+function loadSettings(){
+  settings.company_name = localStorage.getItem('company_name') || settings.company_name;
+  settings.company_address = localStorage.getItem('company_address') || settings.company_address;
+  settings.company_gst = localStorage.getItem('company_gst') || settings.company_gst;
+  settings.company_email = localStorage.getItem('company_email') || settings.company_email;
+  settings.operator = localStorage.getItem('operator_name') || settings.operator;
+  document.querySelectorAll('.hdr-logo').forEach(el=>el.textContent='STYLEYS');
+  if(document.getElementById('hdr-date')) document.getElementById('hdr-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+}
+
+function saveSettings(){
+  settings.company_name = document.getElementById('st-name').value.trim()||settings.company_name;
+  settings.company_address = document.getElementById('st-address').value.trim()||settings.company_address;
+  settings.company_gst = document.getElementById('st-gst').value.trim()||settings.company_gst;
+  settings.company_email = document.getElementById('st-email').value.trim()||settings.company_email;
+  settings.operator = document.getElementById('st-operator').value.trim()||settings.operator;
+  localStorage.setItem('company_name',settings.company_name);
+  localStorage.setItem('company_address',settings.company_address);
+  localStorage.setItem('company_gst',settings.company_gst);
+  localStorage.setItem('company_email',settings.company_email);
+  localStorage.setItem('operator_name',settings.operator);
+  document.getElementById('settings-save-msg').textContent='Settings saved locally.';
+  setTimeout(()=>{document.getElementById('settings-save-msg').textContent='';},3000);
+}
+
+function renderSettingsPage(){
+  if(!document.getElementById('pg-settings')) return;
+  document.getElementById('pg-settings').innerHTML=`
+  <div class="page-title">Settings</div>
+  <div class="card">
+    <div class="card-title">Company & Operator Settings</div>
+    <div class="form-grid">
+      <div class="fg"><label>Company Name</label><input id="st-name" value="${settings.company_name}"/></div>
+      <div class="fg"><label>Company GSTIN</label><input id="st-gst" value="${settings.company_gst}"/></div>
+      <div class="fg"><label>Company Address</label><input id="st-address" value="${settings.company_address}"/></div>
+      <div class="fg"><label>Company Email</label><input id="st-email" value="${settings.company_email}"/></div>
+      <div class="fg" style="grid-column:1/-1"><label>Operator / User Name</label><input id="st-operator" value="${settings.operator}" placeholder="Admin or Sales User"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+    <div id="settings-save-msg" style="color:#27ae60;font-size:13px;margin-top:10px"></div>
+  </div>`;
+}
+
 
 // ── NAV ───────────────────────────────────────────────
 function nav(pg,el){
-  ['dashboard','inventory','bulk','sales','challans','ai'].forEach(p=>document.getElementById('pg-'+p).style.display='none');
+  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>document.getElementById('pg-'+p).style.display='none');
   document.getElementById('pg-'+pg).style.display='block';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   if(pg==='bulk') renderBulkPage();
   if(pg==='ai') renderAiPage();
+  if(pg==='settings') renderSettingsPage();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
@@ -402,7 +471,7 @@ function renderInventoryPage(){
     <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
   </div>
   <div class="search-row">
-    <input class="search-input" id="inv-q" placeholder="🔍 Search by name, SKU, category..." oninput="filterInv()"/>
+    <input class="search-input" id="inv-q" placeholder="🔍 Search by code, name, SKU, category..." oninput="filterInv()"/>
     <select id="inv-cat" style="padding:9px 12px;border-radius:8px;border:1.5px solid #e0d8f0;background:#fff;font-size:13px" onchange="filterInv()">
       <option value="">All Categories</option>
       ${CATS.map(c=>`<option>${c}</option>`).join('')}
@@ -414,9 +483,12 @@ function renderInventoryPage(){
       <option value="ok">In Stock</option>
     </select>
   </div>
+  <div class="card" style="margin-bottom:16px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    ${CATS.map(c=>{const itemsByCat=items.filter(i=>i.category===c); if(!itemsByCat.length) return ''; const totalQty=itemsByCat.reduce((s,i)=>s+Number(i.qty),0); const totalPcs=itemsByCat.reduce((s,i)=>s+Number(i.qty)*(Number(i.set_size)||1),0); return `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.07)"><div style="font-size:12px;color:#888;margin-bottom:6px">${c}</div><div style="font-size:20px;font-weight:700">${totalQty}</div><div style="font-size:12px;color:#555;margin-top:6px">Eq. ${totalPcs} pcs</div></div>`}).join('')}
+  </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="inv-tbody"></tbody>
     </table>
   </div>`;
@@ -428,19 +500,20 @@ function filterInv(){
   const cat=document.getElementById('inv-cat')?.value||'';
   const st=document.getElementById('inv-status')?.value||'';
   const filtered=items.filter(i=>{
-    const ms=i.name?.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q);
+    const ms=i.name?.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q);
     const mc=!cat||i.category===cat;
     const mst=!st||(st==='out'&&i.qty<=0)||(st==='low'&&i.qty>0&&i.qty<=i.threshold)||(st==='ok'&&i.qty>i.threshold);
     return ms&&mc&&mst;
   });
   const tbody=document.getElementById('inv-tbody');
   if(!tbody) return;
-  tbody.innerHTML=filtered.length===0?`<tr><td colspan="11" style="text-align:center;padding:24px;color:#ccc">Koi item nahi mila</td></tr>`:
+  tbody.innerHTML=filtered.length===0?`<tr><td colspan="13" style="text-align:center;padding:24px;color:#ccc">Koi item nahi mila</td></tr>`:
   filtered.map(i=>`<tr>
+    <td style="color:#999;font-size:12px">${i.item_code||'-'}</td>
     <td style="color:#999;font-size:12px">${i.sku||'-'}</td>
     <td style="font-weight:600">${i.name}</td>
     <td>${i.category||'-'}</td>
-    <td style="font-weight:600;color:${i.qty<=0?'#e74c3c':i.qty<=i.threshold?'#e67e22':'#222'}">${i.qty}</td>
+    <td style="font-weight:600;color:${i.qty<=0?'#e74c3c':i.qty<=i.threshold?'#e67e22':'#222'}">${i.qty}${(i.set_size||1)>1?` (${i.qty*(i.set_size||1)} pcs)`:''}</td>
     <td>${i.unit}</td>
     <td>${i.threshold}</td>
     <td>₹${Number(i.price).toLocaleString('en-IN')}</td>
@@ -461,6 +534,7 @@ function openItemModal(id){
   editingItemId=id;
   const it=id?items.find(x=>x.id===id):{sku:'',name:'',category:'Fabric',unit:'pcs',qty:0,threshold:10,price:0,hsn:'',location:'',set_size:1};
   document.getElementById('item-modal-title').textContent=id?'Edit Item':'Add New Item';
+  document.getElementById('fm-code').value=it.item_code||'';
   document.getElementById('fm-sku').value=it.sku||'';
   document.getElementById('fm-name').value=it.name||'';
   document.getElementById('fm-cat').value=it.category||'Fabric';
@@ -477,12 +551,19 @@ function openItemModal(id){
 
 async function saveItem(){
   const name=document.getElementById('fm-name').value.trim();
+  const code=document.getElementById('fm-code').value.trim();
+  const sku=document.getElementById('fm-sku').value.trim();
   if(!name){document.getElementById('item-modal-err').textContent='Name zaroori hai';return;}
-  const data={sku:document.getElementById('fm-sku').value.trim(),name,category:document.getElementById('fm-cat').value,
+  if(!sku){document.getElementById('item-modal-err').textContent='SKU zaroori hai';return;}
+  const existing=items.find(i=>(i.sku===sku||i.item_code===code) && i.id!==editingItemId);
+  if(existing){document.getElementById('item-modal-err').textContent='Ye SKU/item code already maujood hai. Edit karo ya unique code do.';return;}
+  const data={item_code:code,sku, name,category:document.getElementById('fm-cat').value,
     unit:document.getElementById('fm-unit').value,qty:Number(document.getElementById('fm-qty').value),
     threshold:Number(document.getElementById('fm-thr').value),price:Number(document.getElementById('fm-price').value),
     hsn:document.getElementById('fm-hsn').value.trim(),location:document.getElementById('fm-loc').value.trim(),
     set_size:Number(document.getElementById('fm-set-size').value)||1};
+  if(!DB_SCHEMA.item_code) delete data.item_code;
+  if(!DB_SCHEMA.set_size) delete data.set_size;
   if(editingItemId) await sb.from('items').update(data).eq('id',editingItemId);
   else await sb.from('items').insert(data);
   document.getElementById('item-modal').style.display='none';
@@ -532,8 +613,8 @@ function handleCSV(file){
       document.getElementById('bulk-preview').innerHTML=`
         <div class="alert alert-info"><b>${rows.length} records found.</b> Preview:</div>
         <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-          <thead><tr><th>Action</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Price</th><th>Set Size</th></tr></thead>
-          <tbody>${rows.slice(0,10).map(r=>`<tr><td>${r.action||'insert'}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>${r.unit||'pcs'}</td><td>₹${r.price||0}</td><td>${r.set_size||1}</td></tr>`).join('')}</tbody>
+          <thead><tr><th>Action</th><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Price</th><th>Set Size</th></tr></thead>
+          <tbody>${rows.slice(0,10).map(r=>`<tr><td>${r.action||'insert'}</td><td>${r.item_code||''}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>${r.unit||'pcs'}</td><td>₹${r.price||0}</td><td>${r.set_size||1}</td></tr>`).join('')}</tbody>
         </table></div>
         ${rows.length>10?`<p style="font-size:12px;color:#aaa;margin-top:6px">... aur ${rows.length-10} aur records</p>`:''}
         <div style="display:flex;gap:8px;margin-top:14px">
@@ -549,11 +630,13 @@ async function importCSV(rows){
   for(const r of rows){
     const action=(r.action||'insert').toLowerCase();
     const data={
-      sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
+      item_code:r.item_code||'',sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
       qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
       unit:r.unit||'pcs',price:Number(r.price)||0,
       hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
     };
+    if(!DB_SCHEMA.item_code) delete data.item_code;
+    if(!DB_SCHEMA.set_size) delete data.set_size;
     if(action==='delete'){
       if(r.sku) await sb.from('items').delete().eq('sku',r.sku);
       deleted++;
@@ -570,7 +653,7 @@ async function importCSV(rows){
 }
 
 function downloadSample(){
-  const csv='action,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\ninsert,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nupdate,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1\ndelete,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
+  const csv='action,item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\ninsert,ITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nupdate,ITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1\ndelete,ITM-999,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='styleys_sample_inventory.csv'; a.click();
@@ -590,6 +673,7 @@ function renderSalesPage(){
       <div class="fg"><label>GST Rate (%)</label><select id="sc-gst"><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option><option value="0">0% (Exempt)</option></select></div>
       <div class="fg"><label>Color</label><input id="sc-color" placeholder="e.g., Red, Blue"/></div>
     </div>
+    <div id="recent-parties-sales" style="font-size:12px;color:#555;margin-top:10px"></div>
 
     <div style="margin-bottom:8px">
       <div class="order-row-header">
@@ -612,8 +696,39 @@ function renderSalesPage(){
   <div id="sales-list"></div>`;
 
   saleRows=[{id:Date.now(),itemId:'',qty:1,price:0}];
+  renderPartySuggestions('sales');
   renderSaleRows();
   filterSales();
+}
+
+function getRecentParties(){
+  const names=[...new Set([...sales.map(o=>o.customer), ...challans.map(c=>c.customer)])].filter(Boolean);
+  return names.slice(0,8);
+}
+
+function renderPartySuggestions(type){
+  const container=document.getElementById(type==='sales'?'recent-parties-sales':'recent-parties-challans');
+  if(!container) return;
+  const names=getRecentParties();
+  if(!names.length){container.innerHTML='';return;}
+  container.innerHTML=`Recent parties: ${names.map(n=>`<button class="btn btn-sm btn-outline" onclick="fillParty('${type}','${n.replace(/'/g,"\\'")}')">${n}</button>`).join(' ')}`;
+}
+
+function fillParty(type,name){
+  const details={gstin:'',address:''};
+  const sale=sales.find(o=>o.customer===name);
+  const challan=challans.find(c=>c.customer===name);
+  if(sale){details.gstin=sale.customer_gstin||'';}
+  if(challan){details.address=challan.customer_address||'';}
+  if(type==='sales'){
+    document.getElementById('sc-cust').value=name;
+    document.getElementById('sc-gstin').value=details.gstin;
+    document.getElementById('sale-err').textContent='';
+  } else {
+    document.getElementById('cc-cust').value=name;
+    document.getElementById('cc-addr').value=details.address;
+    document.getElementById('challan-err').textContent='';
+  }
 }
 
 function renderSaleRows(){
@@ -635,7 +750,7 @@ function searchItemDrop(rowId,inputId,dropId){
   const q=document.getElementById(inputId).value.toLowerCase();
   const drop=document.getElementById(dropId);
   if(q.length<1){drop.style.display='none';return;}
-  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)).slice(0,8);
+  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)).slice(0,8);
   if(matches.length===0){drop.style.display='none';return;}
   drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectItemForRow('${rowId}',${i.id},'${inputId}','${dropId}')">
     ${i.name}<span class="item-sku">${i.sku||''}</span>
@@ -663,6 +778,7 @@ async function submitSale(){
   const cust=document.getElementById('sc-cust').value.trim();
   const gstin=document.getElementById('sc-gstin').value.trim();
   const date=document.getElementById('sc-date').value;
+  const gstRate=Number(document.getElementById('sc-gst').value);
   const color=document.getElementById('sc-color').value.trim();
   const err=document.getElementById('sale-err');
   err.textContent='';
@@ -675,11 +791,14 @@ async function submitSale(){
   const gst=subtotal*gstRate/100;
   const total=subtotal+gst;
   const orderNo='ORD-'+String(Date.now()).slice(-6);
-
-  const {data:sale}=await sb.from('sales').insert({
+  const payload={
     order_no:orderNo,customer:cust,customer_gstin:gstin,
-    sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending', color
-  }).select().single();
+    sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending'
+  };
+  if(DB_SCHEMA.color) payload.color=color;
+  if(DB_SCHEMA.created_by) payload.created_by=settings.operator;
+
+  const {data:sale}=await sb.from('sales').insert(payload).select().single();
 
   if(sale){
     await sb.from('sale_items').insert(rows.map(r=>({
@@ -716,7 +835,7 @@ async function togglePayment(id,current){
 
 function filterSales(){
   const q=(document.getElementById('sale-q')?.value||'').toLowerCase();
-  const filtered=sales.filter(o=>o.order_no?.toLowerCase().includes(q)||o.customer?.toLowerCase().includes(q));
+  const filtered=sales.filter(o=>o.order_no?.toLowerCase().includes(q)||o.customer?.toLowerCase().includes(q)||o.color?.toLowerCase().includes(q)||o.created_by?.toLowerCase().includes(q));
   document.getElementById('sales-list').innerHTML=filtered.map(o=>{
     const si=o.sale_items||[];
     return`<div class="order-card">
@@ -725,6 +844,7 @@ function filterSales(){
           <span style="font-weight:700;font-size:14px">${o.order_no}</span>
           <span style="margin-left:10px;color:#666;font-size:13px">${o.customer}</span>
           ${o.customer_gstin?`<span style="margin-left:8px;font-size:11px;color:#aaa">${o.customer_gstin}</span>`:''}
+          ${o.color?`<span style="margin-left:8px;font-size:11px;background:#f0f7ff;color:#1a5276;padding:2px 8px;border-radius:10px;font-weight:600">${o.color}</span>`:''}
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <span style="font-size:12px;color:#aaa">${o.sale_date}</span>
@@ -733,6 +853,7 @@ function filterSales(){
           <button class="btn-print" onclick="printSale(${o.id})">🖨️ Invoice</button>
         </div>
       </div>
+      <div style="font-size:12px;color:#777;margin-top:6px">Created by: ${o.created_by||settings.operator}</div>
       <div style="font-size:12px;color:#aaa;margin-top:4px">${si.map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
     </div>`;
   }).join('')||'<div style="text-align:center;padding:30px;color:#ccc">Koi orders nahi</div>';
@@ -747,10 +868,10 @@ function printSale(id){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #6c3fc5">
       <div>
         <div style="background:#6c3fc5;color:#fff;display:inline-block;padding:6px 16px;border-radius:6px;font-weight:800;font-size:22px;letter-spacing:2px">STYLEYS</div>
-        <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${CO_NAME}</div>
-        <div style="font-size:12px;color:#888">${CO_ADDR}</div>
-        <div style="font-size:12px;color:#888">GSTIN: ${GST_NO}</div>
-        <div style="font-size:12px;color:#888">${CO_EMAIL}</div>
+        <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${settings.company_name}</div>
+        <div style="font-size:12px;color:#888">${settings.company_address}</div>
+        <div style="font-size:12px;color:#888">GSTIN: ${settings.company_gst}</div>
+        <div style="font-size:12px;color:#888">${settings.company_email}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:22px;font-weight:800;color:#6c3fc5">TAX INVOICE</div>
@@ -792,7 +913,7 @@ function printSale(id){
     </div>
     <div style="margin-top:24px;border-top:1px solid #eee;padding-top:14px;display:flex;justify-content:space-between;font-size:11px;color:#aaa">
       <span>Thank you for your business!</span>
-      <span>${CO_NAME} | GSTIN: ${GST_NO}</span>
+      <span>${settings.company_name} | GSTIN: ${settings.company_gst}</span>
     </div>`;
   document.getElementById('print-modal').style.display='flex';
 }
@@ -817,6 +938,7 @@ function renderChallansPage(){
       <div class="fg"><label>Color</label><input id="cc-color" placeholder="e.g., Red, Blue"/></div>
       <div class="fg" style="grid-column:1/-1"><label>Remarks</label><input id="cc-remarks" placeholder="Optional remarks"/></div>
     </div>
+    <div id="recent-parties-challans" style="font-size:12px;color:#555;margin-top:10px"></div>
 
     <div style="margin-bottom:8px">
       <div style="display:grid;grid-template-columns:2fr 1fr 1fr 40px;gap:8px;margin-bottom:4px">
@@ -843,6 +965,7 @@ function renderChallansPage(){
 
   challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,remarks:''}];
   renderChallanRows();
+  renderPartySuggestions('challans');
   filterChallans();
 }
 
@@ -865,7 +988,7 @@ function searchItemDropC(rowId,inputId,dropId){
   const q=document.getElementById(inputId).value.toLowerCase();
   const drop=document.getElementById(dropId);
   if(q.length<1){drop.style.display='none';return;}
-  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)).slice(0,8);
+  const matches=items.filter(i=>i.name.toLowerCase().includes(q)||(i.sku||'').toLowerCase().includes(q)||(i.item_code||'').toLowerCase().includes(q)||(i.category||'').toLowerCase().includes(q)).slice(0,8);
   if(!matches.length){drop.style.display='none';return;}
   drop.innerHTML=matches.map(i=>`<div class="item-dropdown-row" onclick="selectItemForChallan('${rowId}',${i.id},'${inputId}','${dropId}')">
     ${i.name}<span class="item-sku">${i.sku||''}</span><span class="item-stock">Stock: ${i.qty} ${i.unit}</span>
@@ -895,13 +1018,16 @@ async function submitChallan(){
   if(!rows.length){err.textContent='Kam se kam ek item select karo.';return;}
   const challanNo='CHN-'+String(Date.now()).slice(-6);
   const color=document.getElementById('cc-color').value.trim();
-  const {data:ch}=await sb.from('challans').insert({
+  const payload={
     challan_no:challanNo,customer:cust,
     customer_address:document.getElementById('cc-addr').value.trim(),
     challan_date:document.getElementById('cc-date').value,
     purpose:document.getElementById('cc-purpose').value,
-    remarks:document.getElementById('cc-remarks').value.trim(), color
-  }).select().single();
+    remarks:document.getElementById('cc-remarks').value.trim()
+  };
+  if(DB_SCHEMA.color) payload.color=color;
+  if(DB_SCHEMA.created_by) payload.created_by=settings.operator;
+  const {data:ch}=await sb.from('challans').insert(payload).select().single();
   if(ch){
     await sb.from('challan_items').insert(rows.map(r=>({
       challan_id:ch.id,item_id:r.itemId,item_name:r.itemName,
@@ -922,7 +1048,7 @@ function resetChallanForm(){
 
 function filterChallans(){
   const q=(document.getElementById('ch-q')?.value||'').toLowerCase();
-  const filtered=challans.filter(c=>c.challan_no?.toLowerCase().includes(q)||c.customer?.toLowerCase().includes(q));
+  const filtered=challans.filter(c=>c.challan_no?.toLowerCase().includes(q)||c.customer?.toLowerCase().includes(q)||c.color?.toLowerCase().includes(q)||c.created_by?.toLowerCase().includes(q));
   document.getElementById('challans-list').innerHTML=filtered.map(ch=>{
     const ci=ch.challan_items||[];
     return`<div class="order-card challan">
@@ -938,6 +1064,7 @@ function filterChallans(){
           <button class="btn-challan" onclick="printChallan(${ch.id})">🖨️ Challan</button>
         </div>
       </div>
+      <div style="font-size:12px;color:#777;margin-top:6px">Created by: ${ch.created_by||settings.operator}${ch.color?` | Color: ${ch.color}`:''}</div>
       <div style="font-size:12px;color:#aaa;margin-top:4px">${ci.map(i=>`${i.item_name} × ${i.qty}`).join(' | ')}</div>
       ${ch.remarks?`<div style="font-size:11px;color:#bbb;margin-top:3px">📝 ${ch.remarks}</div>`:''}
     </div>`;
@@ -952,9 +1079,9 @@ function printChallan(id){
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:18px;border-bottom:2px solid #1abc9c">
       <div>
         <div style="background:#6c3fc5;color:#fff;display:inline-block;padding:6px 16px;border-radius:6px;font-weight:800;font-size:22px;letter-spacing:2px">STYLEYS</div>
-        <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${CO_NAME}</div>
-        <div style="font-size:12px;color:#888">${CO_ADDR}</div>
-        <div style="font-size:12px;color:#888">GSTIN: ${GST_NO}</div>
+        <div style="font-size:13px;color:#555;margin-top:6px;font-weight:600">${settings.company_name}</div>
+        <div style="font-size:12px;color:#888">${settings.company_address}</div>
+        <div style="font-size:12px;color:#888">GSTIN: ${settings.company_gst}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:20px;font-weight:800;color:#1abc9c">DELIVERY CHALLAN</div>
@@ -991,10 +1118,10 @@ function printChallan(id){
     </table>
     <div style="margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;color:#888">
       <div style="border-top:1px solid #ccc;padding-top:8px;text-align:center">Receiver's Signature & Stamp</div>
-      <div style="border-top:1px solid #ccc;padding-top:8px;text-align:center">For ${CO_NAME}<br><br>Authorised Signatory</div>
+      <div style="border-top:1px solid #ccc;padding-top:8px;text-align:center">For ${settings.company_name}<br><br>Authorised Signatory</div>
     </div>
     <div style="margin-top:20px;border-top:1px solid #eee;padding-top:12px;font-size:11px;color:#aaa;text-align:center">
-      This is a computer generated delivery challan — ${CO_NAME} | GSTIN: ${GST_NO}
+      This is a computer generated delivery challan — ${settings.company_name} | GSTIN: ${settings.company_gst}
     </div>`;
   document.getElementById('print-modal').style.display='flex';
 }
