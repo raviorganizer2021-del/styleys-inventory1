@@ -637,29 +637,45 @@ function handleCSV(file){
 }
 
 async function importCSV(rows){
-  let inserted=0, updated=0, deleted=0;
+  let inserted=0, updated=0, deleted=0, errors=0;
+  const errorMsgs = [];
   for(const r of rows){
-    const action=(r.action||'insert').toLowerCase();
-    const data={
-      item_code:r.item_code||'',sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
-      qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
-      unit:r.unit||'pcs',price:Number(r.price)||0,
-      hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
-    };
-    if(!DB_SCHEMA.item_code) delete data.item_code;
-    if(!DB_SCHEMA.set_size) delete data.set_size;
-    if(action==='delete'){
-      if(r.sku) await sb.from('items').delete().eq('sku',r.sku);
-      deleted++;
-    } else if(action==='update'){
-      if(r.sku) await sb.from('items').update(data).eq('sku',r.sku);
-      updated++;
-    } else { // insert
-      await sb.from('items').insert(data);
-      inserted++;
+    try {
+      const action=(r.action||'insert').toLowerCase();
+      const data={
+        item_code:r.item_code||'',sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
+        qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
+        unit:r.unit||'pcs',price:Number(r.price)||0,
+        hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
+      };
+      if(!DB_SCHEMA.item_code) delete data.item_code;
+      if(!DB_SCHEMA.set_size) delete data.set_size;
+      if(action==='delete'){
+        if(r.sku) {
+          const {error} = await sb.from('items').delete().eq('sku',r.sku);
+          if(error) throw error;
+          deleted++;
+        }
+      } else if(action==='update'){
+        if(r.sku) {
+          const {error} = await sb.from('items').update(data).eq('sku',r.sku);
+          if(error) throw error;
+          updated++;
+        }
+      } else { // insert
+        if(!r.sku || !r.name) throw new Error('SKU and Name are required for insert');
+        const {error} = await sb.from('items').insert(data);
+        if(error) throw error;
+        inserted++;
+      }
+    } catch(err) {
+      errors++;
+      errorMsgs.push(`Row ${rows.indexOf(r)+1}: ${err.message}`);
     }
   }
-  document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-success">✅ Import complete: ${inserted} inserted, ${updated} updated, ${deleted} deleted!</div>`;
+  const successMsg = `✅ Import complete: ${inserted} inserted, ${updated} updated, ${deleted} deleted!`;
+  const errorMsg = errors > 0 ? `<div class="alert alert-error">❌ ${errors} errors:<br>${errorMsgs.join('<br>')}</div>` : '';
+  document.getElementById('bulk-preview').innerHTML = errorMsg + (inserted+updated+deleted > 0 ? `<div class="alert alert-success">${successMsg}</div>` : '');
   await loadAll();
 }
 
