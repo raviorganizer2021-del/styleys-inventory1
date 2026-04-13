@@ -183,6 +183,7 @@ tr:hover td{background:#fdf9ff}
   category text, qty numeric default 0,
   threshold numeric default 10, unit text default 'pcs',
   price numeric default 0, hsn text, location text,
+  monthly_sales text default '{}',
   created_at timestamptz default now()
 );
 CREATE TABLE sales (
@@ -368,6 +369,7 @@ async function checkDbColumn(table,column){
 async function checkDbSchema(){
   DB_SCHEMA.item_code = await checkDbColumn('items','item_code');
   DB_SCHEMA.set_size = await checkDbColumn('items','set_size');
+  DB_SCHEMA.monthly_sales = await checkDbColumn('items','monthly_sales');
   DB_SCHEMA.created_by = await checkDbColumn('sales','created_by') || await checkDbColumn('challans','created_by');
   DB_SCHEMA.color = await checkDbColumn('sales','color') || await checkDbColumn('challans','color');
 }
@@ -531,7 +533,7 @@ function filterInv(){
     <td style="font-size:12px">${i.location||'-'}</td>
     <td style="font-size:12px">${i.set_size||1}</td>
     <td><span class="badge ${i.qty<=0?'badge-out':i.qty<=i.threshold?'badge-low':'badge-ok'}">${i.qty<=0?'Out of Stock':i.qty<=i.threshold?'Low Stock':'In Stock'}</span></td>
-    <td style="font-size:12px;color:#0066cc;font-weight:600">${getStockRunway(i).daysLeft} days</td>
+    <td style="font-size:12px;color:#0066cc;font-weight:600">${getStockRunway(i).daysLeft===null?'-':getStockRunway(i).daysLeft+' days'}</td>
     <td>
       <div style="display:flex;gap:5px">
         <button class="btn btn-secondary btn-sm" onclick="openItemModal(${i.id})">Edit</button>
@@ -654,7 +656,8 @@ function renderBulkPage(){
   <div class="page-title">Bulk Inventory Upload</div>
   <div class="card">
     <div class="card-title">CSV File Upload</div>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">CSV file mein yeh columns hone chahiye: <b>action, sku, name, category, qty, threshold, unit, price, hsn, location, set_size</b></p>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">CSV file mein yeh columns hone chahiye: <b>action, sku, name, category, qty, threshold, unit, price, hsn, location, set_size, monthly_sales</b></p>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">Ya phir monthly fields use karo: <b>sales_2026-03, sales_2026-04, etc.</b></p>
     <div class="upload-zone" id="drop-zone" onclick="document.getElementById('csv-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
       <div class="upload-icon">📂</div>
       <p>CSV file yahan drag & drop karo</p>
@@ -697,18 +700,44 @@ function handleCSV(file){
   });
 }
 
+function parseMonthlySalesRow(r){
+  const months={};
+  if(r.monthly_sales){
+    try {
+      const parsed = typeof r.monthly_sales === 'string' ? JSON.parse(r.monthly_sales) : r.monthly_sales;
+      if(parsed && typeof parsed === 'object'){
+        Object.entries(parsed).forEach(([m,v])=>{ if(v!=='' && v!=null) months[m]=Number(v)||0; });
+      }
+    } catch(e) {
+      // ignore parse errors and continue with other columns
+    }
+  }
+  Object.keys(r).forEach(k=>{
+    const match = k.match(/^sales_(\d{4}-\d{2})$/);
+    if(match && r[k]!==undefined && r[k]!==null && r[k]!==""){
+      months[match[1]]=Number(r[k])||0;
+    }
+  });
+  return Object.keys(months).length?months:null;
+}
+
 async function importCSV(rows){
   let inserted=0, updated=0, deleted=0, errors=0;
   const errorMsgs = [];
   for(const r of rows){
     try {
       const action=(r.action||'insert').toLowerCase();
+      const monthlySales=parseMonthlySalesRow(r);
       const data={
         item_code:r.item_code||'',sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
         qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
         unit:r.unit||'pcs',price:Number(r.price)||0,
         hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
       };
+      if(DB_SCHEMA.monthly_sales && monthlySales){
+        data.monthly_sales=JSON.stringify(monthlySales);
+      }
+      if(!DB_SCHEMA.monthly_sales) delete data.monthly_sales;
       if(!DB_SCHEMA.item_code) delete data.item_code;
       if(!DB_SCHEMA.set_size) delete data.set_size;
       if(action==='delete'){
@@ -744,7 +773,7 @@ async function importCSV(rows){
 }
 
 function downloadSample(){
-  const csv='action,item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\ninsert,ITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nupdate,ITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1\ndelete,ITM-999,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
+  const csv='action,item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size,monthly_sales\ninsert,ITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1,"{\"2026-03\": 50, \"2026-04\": 60}"\nupdate,ITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1,"{\"2026-03\": 120, \"2026-04\": 110}"\ndelete,ITM-999,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='styleys_sample_inventory.csv'; a.click();
@@ -891,28 +920,40 @@ async function submitSale(){
   if(DB_SCHEMA.color) payload.color=color;
   if(DB_SCHEMA.created_by) payload.created_by=createdBy;
 
-  const {data:sale}=await sb.from('sales').insert(payload).select().single();
-
-  if(sale){
-    await sb.from('sale_items').insert(rows.map(r=>({
-      sale_id:sale.id,item_id:r.itemId,item_name:r.itemName,
-      sku:items.find(i=>i.id===r.itemId)?.sku||'',
-      qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
-    })));
-    const currentMonth=new Date().toISOString().slice(0,7);
-    for(const r of rows){
-      const it=items.find(x=>x.id===r.itemId);
-      if(it) {
-        const deductQty = r.unit === 'sets' ? r.qty * it.set_size : r.qty;
-        const monthlySales=it.monthly_sales||'{}';
-        const salesMap=JSON.parse(monthlySales);
-        salesMap[currentMonth]=(salesMap[currentMonth]||0)+deductQty;
-        await sb.from('items').update({qty:Math.max(0,it.qty - deductQty),monthly_sales:JSON.stringify(salesMap)}).eq('id',r.itemId);
+  try {
+    const {data:sale,error:saleError}=await sb.from('sales').insert(payload).select().single();
+    if(saleError) throw saleError;
+    if(sale){
+      const {error:itemError}=await sb.from('sale_items').insert(rows.map(r=>({
+        sale_id:sale.id,item_id:r.itemId,item_name:r.itemName,
+        sku:items.find(i=>i.id===r.itemId)?.sku||'',
+        qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
+      })));
+      if(itemError) throw itemError;
+      const currentMonth=new Date().toISOString().slice(0,7);
+      for(const r of rows){
+        const it=items.find(x=>x.id===r.itemId);
+        if(it) {
+          const deductQty = r.unit === 'sets' ? r.qty * it.set_size : r.qty;
+          const updateData={qty:Math.max(0,it.qty - deductQty)};
+          if(DB_SCHEMA.monthly_sales){
+            const monthlySales=it.monthly_sales||'{}';
+            const salesMap=JSON.parse(monthlySales);
+            salesMap[currentMonth]=(salesMap[currentMonth]||0)+deductQty;
+            updateData.monthly_sales=JSON.stringify(salesMap);
+          }
+          const {error:updateError}=await sb.from('items').update(updateData).eq('id',r.itemId);
+          if(updateError) throw updateError;
+        }
       }
     }
+    resetSaleForm();
+    await loadAll();
+  } catch(err) {
+    console.error('Sale submission failed', err);
+    err = err.message || JSON.stringify(err);
+    document.getElementById('sale-err').textContent = `Error: ${err}`;
   }
-  resetSaleForm();
-  await loadAll();
 }
 
 function resetSaleForm(){
@@ -928,7 +969,7 @@ function getStockRunway(item){
   const salesMap=item.monthly_sales?JSON.parse(item.monthly_sales):{};
   const months=Object.values(salesMap);
   const avgDailySales=months.length>0?months.reduce((a,b)=>a+b,0)/(months.length*30):0;
-  const daysLeft=avgDailySales>0?Math.round(item.qty/avgDailySales):999;
+  const daysLeft=avgDailySales>0?Math.round(item.qty/avgDailySales):null;
   return{avgDaily:avgDailySales.toFixed(1),daysLeft};
 }
 
@@ -1162,16 +1203,25 @@ async function submitChallan(){
   };
   if(DB_SCHEMA.color) payload.color=color;
   if(DB_SCHEMA.created_by) payload.created_by=createdBy;
-  const {data:ch}=await sb.from('challans').insert(payload).select().single();
-  if(ch){
-    await sb.from('challan_items').insert(rows.map(r=>({
-      challan_id:ch.id,item_id:r.itemId,item_name:r.itemName,
-      sku:items.find(i=>i.id===r.itemId)?.sku||'',
-      qty:r.qty,unit:r.unit||'pcs',remarks:r.remarks||''
-    })));
+
+  try {
+    const {data:ch,error:challanError}=await sb.from('challans').insert(payload).select().single();
+    if(challanError) throw challanError;
+    if(ch){
+      const {error:itemError}=await sb.from('challan_items').insert(rows.map(r=>({
+        challan_id:ch.id,item_id:r.itemId,item_name:r.itemName,
+        sku:items.find(i=>i.id===r.itemId)?.sku||'',
+        qty:r.qty,unit:r.unit||'pcs',remarks:r.remarks||''
+      })));
+      if(itemError) throw itemError;
+    }
+    resetChallanForm();
+    await loadAll();
+  } catch(err) {
+    console.error('Challan submission failed', err);
+    const message = err.message || JSON.stringify(err);
+    document.getElementById('challan-err').textContent = `Error: ${message}`;
   }
-  resetChallanForm();
-  await loadAll();
 }
 
 function resetChallanForm(){
