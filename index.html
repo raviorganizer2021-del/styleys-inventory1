@@ -265,6 +265,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div id="pg-challans" style="display:none"></div>
       <div id="pg-settings" style="display:none"></div>
       <div id="pg-ai" style="display:none"></div>
+      <div id="pg-reports" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -490,13 +491,14 @@ function renderInventoryPage(){
       <option value="out">Out of Stock</option>
       <option value="ok">In Stock</option>
     </select>
+    <button class="btn btn-secondary" onclick="renderSalesReportPage();document.getElementById('pg-inventory').style.display='none';document.getElementById('pg-reports').style.display='block'" style="padding:8px 16px;font-size:13px">📊 Monthly Sales</button>
   </div>
   <div class="card" style="margin-bottom:16px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
     ${CATS.map(c=>{const itemsByCat=items.filter(i=>i.category===c); if(!itemsByCat.length) return ''; const totalQty=itemsByCat.reduce((s,i)=>s+Number(i.qty),0); const totalPcs=itemsByCat.reduce((s,i)=>s+Number(i.qty)*(Number(i.set_size)||1),0); return `<div style="background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.07)"><div style="font-size:12px;color:#888;margin-bottom:6px">${c}</div><div style="font-size:20px;font-weight:700">${totalQty}</div><div style="font-size:12px;color:#555;margin-top:6px">Eq. ${totalPcs} pcs</div></div>`}).join('')}
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Days Left</th><th>Actions</th></tr></thead>
       <tbody id="inv-tbody"></tbody>
     </table>
   </div>`;
@@ -529,6 +531,7 @@ function filterInv(){
     <td style="font-size:12px">${i.location||'-'}</td>
     <td style="font-size:12px">${i.set_size||1}</td>
     <td><span class="badge ${i.qty<=0?'badge-out':i.qty<=i.threshold?'badge-low':'badge-ok'}">${i.qty<=0?'Out of Stock':i.qty<=i.threshold?'Low Stock':'In Stock'}</span></td>
+    <td style="font-size:12px;color:#0066cc;font-weight:600">${getStockRunway(i).daysLeft} days</td>
     <td>
       <div style="display:flex;gap:5px">
         <button class="btn btn-secondary btn-sm" onclick="openItemModal(${i.id})">Edit</button>
@@ -896,11 +899,15 @@ async function submitSale(){
       sku:items.find(i=>i.id===r.itemId)?.sku||'',
       qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
     })));
+    const currentMonth=new Date().toISOString().slice(0,7);
     for(const r of rows){
       const it=items.find(x=>x.id===r.itemId);
       if(it) {
         const deductQty = r.unit === 'sets' ? r.qty * it.set_size : r.qty;
-        await sb.from('items').update({qty:Math.max(0,it.qty - deductQty)}).eq('id',r.itemId);
+        const monthlySales=it.monthly_sales||'{}';
+        const salesMap=JSON.parse(monthlySales);
+        salesMap[currentMonth]=(salesMap[currentMonth]||0)+deductQty;
+        await sb.from('items').update({qty:Math.max(0,it.qty - deductQty),monthly_sales:JSON.stringify(salesMap)}).eq('id',r.itemId);
       }
     }
   }
@@ -915,6 +922,45 @@ function resetSaleForm(){
   document.getElementById('sale-err').textContent='';
   saleRows=[{id:Date.now(),itemId:'',qty:1,price:0}];
   renderSaleRows();
+}
+
+function getStockRunway(item){
+  const salesMap=item.monthly_sales?JSON.parse(item.monthly_sales):{};
+  const months=Object.values(salesMap);
+  const avgDailySales=months.length>0?months.reduce((a,b)=>a+b,0)/(months.length*30):0;
+  const daysLeft=avgDailySales>0?Math.round(item.qty/avgDailySales):999;
+  return{avgDaily:avgDailySales.toFixed(1),daysLeft};
+}
+
+function renderSalesReportPage(){
+  const all12Months=[];
+  for(let i=11;i>=0;i--){
+    const d=new Date();d.setMonth(d.getMonth()-i);
+    all12Months.push(d.toISOString().slice(0,7));
+  }
+  const monthlySKUData={};
+  for(const item of items){
+    const salesMap=item.monthly_sales?JSON.parse(item.monthly_sales):{};
+    for(const [month,qty] of Object.entries(salesMap)){
+      if(!monthlySKUData[item.sku]) monthlySKUData[item.sku]={name:item.name,data:{}};
+      monthlySKUData[item.sku].data[month]=qty;
+    }
+  }
+  document.getElementById('pg-reports').innerHTML=`
+  <div class="page-title">Monthly Sales Report</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>SKU</th><th>Product Name</th>${all12Months.map(m=>\`<th>\${m}</th>\`).join('')}<th>Total</th><th>Avg/Month</th></tr></thead>
+      <tbody>
+        ${Object.entries(monthlySKUData).map(([sku,{name,data}])=>{
+          const totalSales=Object.values(data).reduce((a,b)=>a+b,0);
+          const avgMonthly=(totalSales/12).toFixed(0);
+          return \`<tr><td><b>\${sku}</b></td><td>\${name}</td>\${all12Months.map(m=>\`<td>\${data[m]||0}</td>\`).join('')}<td style="font-weight:600">\${totalSales}</td><td>\${avgMonthly}</td></tr>\`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+  `;
 }
 
 async function togglePayment(id,current){
