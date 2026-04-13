@@ -555,19 +555,29 @@ async function saveItem(){
   const sku=document.getElementById('fm-sku').value.trim();
   if(!name){document.getElementById('item-modal-err').textContent='Name zaroori hai';return;}
   if(!sku){document.getElementById('item-modal-err').textContent='SKU zaroori hai';return;}
-  const existing=items.find(i=>(i.sku===sku||i.item_code===code) && i.id!==editingItemId);
+  const existing=items.find(i=>(i.sku===sku||(code&&i.item_code===code)) && i.id!==editingItemId);
   if(existing){document.getElementById('item-modal-err').textContent='Ye SKU/item code already maujood hai. Edit karo ya unique code do.';return;}
   const data={item_code:code,sku, name,category:document.getElementById('fm-cat').value,
     unit:document.getElementById('fm-unit').value,qty:Number(document.getElementById('fm-qty').value),
     threshold:Number(document.getElementById('fm-thr').value),price:Number(document.getElementById('fm-price').value),
     hsn:document.getElementById('fm-hsn').value.trim(),location:document.getElementById('fm-loc').value.trim(),
     set_size:Number(document.getElementById('fm-set-size').value)||1};
+  if(!code) delete data.item_code;
   if(!DB_SCHEMA.item_code) delete data.item_code;
   if(!DB_SCHEMA.set_size) delete data.set_size;
-  if(editingItemId) await sb.from('items').update(data).eq('id',editingItemId);
-  else await sb.from('items').insert(data);
-  document.getElementById('item-modal').style.display='none';
-  await loadAll();
+  try{
+    if(editingItemId){
+      const {error}=await sb.from('items').update(data).eq('id',editingItemId);
+      if(error) throw error;
+    } else {
+      const {error}=await sb.from('items').insert(data);
+      if(error) throw error;
+    }
+    document.getElementById('item-modal').style.display='none';
+    await loadAll();
+  }catch(err){
+    document.getElementById('item-modal-err').textContent=`Error: ${err.message || err}`;
+  }
 }
 
 async function delItem(id){
@@ -667,11 +677,12 @@ function renderSalesPage(){
   <div class="card">
     <div class="card-title">New Sale Order</div>
     <div class="form-grid">
-      <div class="fg"><label>Customer Name *</label><input id="sc-cust" placeholder="Customer ka naam"/></div>
+        <div class="fg"><label>Customer Name *</label><input id="sc-cust" placeholder="Customer ka naam"/></div>
       <div class="fg"><label>Customer GSTIN</label><input id="sc-gstin" placeholder="GSTIN (optional)"/></div>
       <div class="fg"><label>Date</label><input id="sc-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
       <div class="fg"><label>GST Rate (%)</label><select id="sc-gst"><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option><option value="0">0% (Exempt)</option></select></div>
       <div class="fg"><label>Color</label><input id="sc-color" placeholder="e.g., Red, Blue"/></div>
+      <div class="fg"><label>Prepared By</label><input id="sc-created-by" placeholder="Sales created by" value="${settings.operator}"/></div>
     </div>
     <div id="recent-parties-sales" style="font-size:12px;color:#555;margin-top:10px"></div>
 
@@ -780,6 +791,7 @@ async function submitSale(){
   const date=document.getElementById('sc-date').value;
   const gstRate=Number(document.getElementById('sc-gst').value);
   const color=document.getElementById('sc-color').value.trim();
+  const createdBy=document.getElementById('sc-created-by').value.trim()||settings.operator;
   const err=document.getElementById('sale-err');
   err.textContent='';
   if(!cust){err.textContent='Customer name zaroori hai.';return;}
@@ -796,7 +808,7 @@ async function submitSale(){
     sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending'
   };
   if(DB_SCHEMA.color) payload.color=color;
-  if(DB_SCHEMA.created_by) payload.created_by=settings.operator;
+  if(DB_SCHEMA.created_by) payload.created_by=createdBy;
 
   const {data:sale}=await sb.from('sales').insert(payload).select().single();
 
@@ -929,6 +941,7 @@ function renderChallansPage(){
       <div class="fg"><label>Customer / Party Name *</label><input id="cc-cust" placeholder="Party name"/></div>
       <div class="fg"><label>Customer Address</label><input id="cc-addr" placeholder="Delivery address"/></div>
       <div class="fg"><label>Date</label><input id="cc-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
+      <div class="fg"><label>Prepared By</label><input id="cc-created-by" placeholder="Challan created by" value="${settings.operator}"/></div>
       <div class="fg"><label>Purpose</label>
         <select id="cc-purpose">
           <option>Sale</option><option>Return</option><option>Job Work</option>
@@ -1018,6 +1031,7 @@ async function submitChallan(){
   if(!rows.length){err.textContent='Kam se kam ek item select karo.';return;}
   const challanNo='CHN-'+String(Date.now()).slice(-6);
   const color=document.getElementById('cc-color').value.trim();
+  const createdBy=document.getElementById('cc-created-by').value.trim()||settings.operator;
   const payload={
     challan_no:challanNo,customer:cust,
     customer_address:document.getElementById('cc-addr').value.trim(),
@@ -1026,7 +1040,7 @@ async function submitChallan(){
     remarks:document.getElementById('cc-remarks').value.trim()
   };
   if(DB_SCHEMA.color) payload.color=color;
-  if(DB_SCHEMA.created_by) payload.created_by=settings.operator;
+  if(DB_SCHEMA.created_by) payload.created_by=createdBy;
   const {data:ch}=await sb.from('challans').insert(payload).select().single();
   if(ch){
     await sb.from('challan_items').insert(rows.map(r=>({
