@@ -349,12 +349,14 @@ function logout(){localStorage.removeItem('sb_url');localStorage.removeItem('sb_
 
 // ── DATA ──────────────────────────────────────────────
 async function loadAll(){
+  console.log('Loading all data...');
   const [a,b,c]=await Promise.all([
     sb.from('items').select('*').order('name'),
     sb.from('sales').select('*,sale_items(*)').order('id',{ascending:false}),
     sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false})
   ]);
   items=a.data||[]; sales=b.data||[]; challans=c.data||[];
+  console.log('Items loaded:', items.length);
   renderDashboard(); renderInventoryPage(); renderSalesPage(); renderChallansPage(); renderSettingsPage();
 }
 
@@ -676,7 +678,10 @@ async function importCSV(rows){
   const successMsg = `✅ Import complete: ${inserted} inserted, ${updated} updated, ${deleted} deleted!`;
   const errorMsg = errors > 0 ? `<div class="alert alert-error">❌ ${errors} errors:<br>${errorMsgs.join('<br>')}</div>` : '';
   document.getElementById('bulk-preview').innerHTML = errorMsg + (inserted+updated+deleted > 0 ? `<div class="alert alert-success">${successMsg}</div>` : '');
+  console.log('Before loadAll, items count:', items.length);
   await loadAll();
+  console.log('After loadAll, items count:', items.length);
+  console.log('First few items:', items.slice(0,3));
 }
 
 function downloadSample(){
