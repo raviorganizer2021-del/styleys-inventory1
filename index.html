@@ -297,7 +297,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="fg"><label>Quantity</label><input id="fm-qty" type="number" value="0"/></div>
       <div class="fg"><label>Reorder Threshold</label><input id="fm-thr" type="number" value="10"/></div>
       <div class="fg"><label>Price (₹)</label><input id="fm-price" type="number" value="0"/></div>
-      <div class="fg"><label>HSN Code</label><input id="fm-hsn"/></div>
+      <div class="fg"><label>Set Size</label><input id="fm-set-size" type="number" value="1" min="1"/></div>
       <div class="fg" style="grid-column:1/-1"><label>Location</label><input id="fm-loc"/></div>
     </div>
     <div style="display:flex;gap:8px">
@@ -416,7 +416,7 @@ function renderInventoryPage(){
   </div>
   <div class="tbl-wrap">
     <table>
-      <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+      <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Price (₹)</th><th>HSN</th><th>Location</th><th>Set Size</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody id="inv-tbody"></tbody>
     </table>
   </div>`;
@@ -446,6 +446,7 @@ function filterInv(){
     <td>₹${Number(i.price).toLocaleString('en-IN')}</td>
     <td style="color:#aaa;font-size:12px">${i.hsn||'-'}</td>
     <td style="font-size:12px">${i.location||'-'}</td>
+    <td style="font-size:12px">${i.set_size||1}</td>
     <td><span class="badge ${i.qty<=0?'badge-out':i.qty<=i.threshold?'badge-low':'badge-ok'}">${i.qty<=0?'Out of Stock':i.qty<=i.threshold?'Low Stock':'In Stock'}</span></td>
     <td>
       <div style="display:flex;gap:5px">
@@ -458,7 +459,7 @@ function filterInv(){
 
 function openItemModal(id){
   editingItemId=id;
-  const it=id?items.find(x=>x.id===id):{sku:'',name:'',category:'Fabric',unit:'pcs',qty:0,threshold:10,price:0,hsn:'',location:''};
+  const it=id?items.find(x=>x.id===id):{sku:'',name:'',category:'Fabric',unit:'pcs',qty:0,threshold:10,price:0,hsn:'',location:'',set_size:1};
   document.getElementById('item-modal-title').textContent=id?'Edit Item':'Add New Item';
   document.getElementById('fm-sku').value=it.sku||'';
   document.getElementById('fm-name').value=it.name||'';
@@ -469,6 +470,7 @@ function openItemModal(id){
   document.getElementById('fm-price').value=it.price||0;
   document.getElementById('fm-hsn').value=it.hsn||'';
   document.getElementById('fm-loc').value=it.location||'';
+  document.getElementById('fm-set-size').value=it.set_size||1;
   document.getElementById('item-modal-err').textContent='';
   document.getElementById('item-modal').style.display='flex';
 }
@@ -479,7 +481,8 @@ async function saveItem(){
   const data={sku:document.getElementById('fm-sku').value.trim(),name,category:document.getElementById('fm-cat').value,
     unit:document.getElementById('fm-unit').value,qty:Number(document.getElementById('fm-qty').value),
     threshold:Number(document.getElementById('fm-thr').value),price:Number(document.getElementById('fm-price').value),
-    hsn:document.getElementById('fm-hsn').value.trim(),location:document.getElementById('fm-loc').value.trim()};
+    hsn:document.getElementById('fm-hsn').value.trim(),location:document.getElementById('fm-loc').value.trim(),
+    set_size:Number(document.getElementById('fm-set-size').value)||1};
   if(editingItemId) await sb.from('items').update(data).eq('id',editingItemId);
   else await sb.from('items').insert(data);
   document.getElementById('item-modal').style.display='none';
@@ -498,7 +501,7 @@ function renderBulkPage(){
   <div class="page-title">Bulk Inventory Upload</div>
   <div class="card">
     <div class="card-title">CSV File Upload</div>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">CSV file mein yeh columns hone chahiye: <b>sku, name, category, qty, threshold, unit, price, hsn, location</b></p>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">CSV file mein yeh columns hone chahiye: <b>action, sku, name, category, qty, threshold, unit, price, hsn, location, set_size</b></p>
     <div class="upload-zone" id="drop-zone" onclick="document.getElementById('csv-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
       <div class="upload-icon">📂</div>
       <p>CSV file yahan drag & drop karo</p>
@@ -529,8 +532,8 @@ function handleCSV(file){
       document.getElementById('bulk-preview').innerHTML=`
         <div class="alert alert-info"><b>${rows.length} records found.</b> Preview:</div>
         <div class="tbl-wrap" style="max-height:300px;overflow-y:auto"><table>
-          <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Price</th></tr></thead>
-          <tbody>${rows.slice(0,10).map(r=>`<tr><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>${r.unit||'pcs'}</td><td>₹${r.price||0}</td></tr>`).join('')}</tbody>
+          <thead><tr><th>Action</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Unit</th><th>Price</th><th>Set Size</th></tr></thead>
+          <tbody>${rows.slice(0,10).map(r=>`<tr><td>${r.action||'insert'}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>${r.unit||'pcs'}</td><td>₹${r.price||0}</td><td>${r.set_size||1}</td></tr>`).join('')}</tbody>
         </table></div>
         ${rows.length>10?`<p style="font-size:12px;color:#aaa;margin-top:6px">... aur ${rows.length-10} aur records</p>`:''}
         <div style="display:flex;gap:8px;margin-top:14px">
@@ -542,23 +545,32 @@ function handleCSV(file){
 }
 
 async function importCSV(rows){
-  const toInsert=rows.map(r=>({
-    sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
-    qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
-    unit:r.unit||'pcs',price:Number(r.price)||0,
-    hsn:r.hsn||'',location:r.location||''
-  })).filter(r=>r.name);
-  const {error}=await sb.from('items').insert(toInsert);
-  if(error){
-    document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-danger">Error: ${error.message}</div>`;
-  } else {
-    document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-success">✅ ${toInsert.length} items successfully import ho gaye!</div>`;
-    await loadAll();
+  let inserted=0, updated=0, deleted=0;
+  for(const r of rows){
+    const action=(r.action||'insert').toLowerCase();
+    const data={
+      sku:r.sku||'',name:r.name||'',category:r.category||'Fabric',
+      qty:Number(r.qty)||0,threshold:Number(r.threshold)||10,
+      unit:r.unit||'pcs',price:Number(r.price)||0,
+      hsn:r.hsn||'',location:r.location||'', set_size:Number(r.set_size)||1
+    };
+    if(action==='delete'){
+      if(r.sku) await sb.from('items').delete().eq('sku',r.sku);
+      deleted++;
+    } else if(action==='update'){
+      if(r.sku) await sb.from('items').update(data).eq('sku',r.sku);
+      updated++;
+    } else { // insert
+      await sb.from('items').insert(data);
+      inserted++;
+    }
   }
+  document.getElementById('bulk-preview').innerHTML=`<div class="alert alert-success">✅ Import complete: ${inserted} inserted, ${updated} updated, ${deleted} deleted!</div>`;
+  await loadAll();
 }
 
 function downloadSample(){
-  const csv='sku,name,category,qty,threshold,unit,price,hsn,location\nFAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A\nACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2';
+  const csv='action,sku,name,category,qty,threshold,unit,price,hsn,location,set_size\ninsert,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1\nupdate,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1\ndelete,OLD-001,Old Item,Other,0,0,pcs,0,,,\n';
   const a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
   a.download='styleys_sample_inventory.csv'; a.click();
@@ -576,6 +588,7 @@ function renderSalesPage(){
       <div class="fg"><label>Customer GSTIN</label><input id="sc-gstin" placeholder="GSTIN (optional)"/></div>
       <div class="fg"><label>Date</label><input id="sc-date" type="date" value="${new Date().toISOString().slice(0,10)}"/></div>
       <div class="fg"><label>GST Rate (%)</label><select id="sc-gst"><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option><option value="0">0% (Exempt)</option></select></div>
+      <div class="fg"><label>Color</label><input id="sc-color" placeholder="e.g., Red, Blue"/></div>
     </div>
 
     <div style="margin-bottom:8px">
@@ -635,7 +648,7 @@ function selectItemForRow(rowId,itemId,inputId,dropId){
   const it=items.find(x=>x.id===itemId);
   if(!it) return;
   const row=saleRows.find(r=>r.id==rowId);
-  if(row){row.itemId=itemId;row.itemName=it.name;row.price=it.price;row.unit=it.unit;}
+  if(row){row.itemId=itemId;row.itemName=it.name;row.price=it.price;row.unit=it.set_size>1?'sets':it.unit;}
   document.getElementById(inputId).value=it.name;
   document.getElementById(dropId).style.display='none';
   const priceEl=document.getElementById('srp-'+rowId);
@@ -650,7 +663,7 @@ async function submitSale(){
   const cust=document.getElementById('sc-cust').value.trim();
   const gstin=document.getElementById('sc-gstin').value.trim();
   const date=document.getElementById('sc-date').value;
-  const gstRate=Number(document.getElementById('sc-gst').value);
+  const color=document.getElementById('sc-color').value.trim();
   const err=document.getElementById('sale-err');
   err.textContent='';
   if(!cust){err.textContent='Customer name zaroori hai.';return;}
@@ -665,7 +678,7 @@ async function submitSale(){
 
   const {data:sale}=await sb.from('sales').insert({
     order_no:orderNo,customer:cust,customer_gstin:gstin,
-    sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending'
+    sale_date:date,subtotal,gst_rate:gstRate,gst,total,payment_status:'Pending', color
   }).select().single();
 
   if(sale){
@@ -676,7 +689,10 @@ async function submitSale(){
     })));
     for(const r of rows){
       const it=items.find(x=>x.id===r.itemId);
-      if(it) await sb.from('items').update({qty:Math.max(0,it.qty-r.qty)}).eq('id',r.itemId);
+      if(it) {
+        const deductQty = r.unit === 'sets' ? r.qty * it.set_size : r.qty;
+        await sb.from('items').update({qty:Math.max(0,it.qty - deductQty)}).eq('id',r.itemId);
+      }
     }
   }
   resetSaleForm();
@@ -686,6 +702,7 @@ async function submitSale(){
 function resetSaleForm(){
   document.getElementById('sc-cust').value='';
   document.getElementById('sc-gstin').value='';
+  document.getElementById('sc-color').value='';
   document.getElementById('sale-err').textContent='';
   saleRows=[{id:Date.now(),itemId:'',qty:1,price:0}];
   renderSaleRows();
@@ -797,6 +814,7 @@ function renderChallansPage(){
           <option>Sample</option><option>Repair</option><option>Other</option>
         </select>
       </div>
+      <div class="fg"><label>Color</label><input id="cc-color" placeholder="e.g., Red, Blue"/></div>
       <div class="fg" style="grid-column:1/-1"><label>Remarks</label><input id="cc-remarks" placeholder="Optional remarks"/></div>
     </div>
 
@@ -859,7 +877,7 @@ function selectItemForChallan(rowId,itemId,inputId,dropId){
   const it=items.find(x=>x.id===itemId);
   if(!it) return;
   const row=challanRows.find(r=>r.id==rowId);
-  if(row){row.itemId=itemId;row.itemName=it.name;row.unit=it.unit;}
+  if(row){row.itemId=itemId;row.itemName=it.name;row.unit=it.set_size>1?'sets':it.unit;}
   document.getElementById(inputId).value=it.name;
   document.getElementById(dropId).style.display='none';
 }
@@ -876,12 +894,13 @@ async function submitChallan(){
   const rows=challanRows.filter(r=>r.itemId&&r.qty>0);
   if(!rows.length){err.textContent='Kam se kam ek item select karo.';return;}
   const challanNo='CHN-'+String(Date.now()).slice(-6);
+  const color=document.getElementById('cc-color').value.trim();
   const {data:ch}=await sb.from('challans').insert({
     challan_no:challanNo,customer:cust,
     customer_address:document.getElementById('cc-addr').value.trim(),
     challan_date:document.getElementById('cc-date').value,
     purpose:document.getElementById('cc-purpose').value,
-    remarks:document.getElementById('cc-remarks').value.trim()
+    remarks:document.getElementById('cc-remarks').value.trim(), color
   }).select().single();
   if(ch){
     await sb.from('challan_items').insert(rows.map(r=>({
@@ -895,7 +914,7 @@ async function submitChallan(){
 }
 
 function resetChallanForm(){
-  ['cc-cust','cc-addr','cc-remarks'].forEach(id=>{document.getElementById(id).value='';});
+  ['cc-cust','cc-addr','cc-remarks','cc-color'].forEach(id=>{document.getElementById(id).value='';});
   document.getElementById('challan-err').textContent='';
   challanRows=[{id:Date.now(),itemId:'',itemName:'',qty:1,remarks:''}];
   renderChallanRows();
