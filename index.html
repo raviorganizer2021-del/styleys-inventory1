@@ -699,20 +699,20 @@ async function submitSale(){
     }).select().single();
     if(e1) throw e1;
     const{error:e2}=await sb.from('sale_items').insert(validRows.map(r=>({
-      sale_id:sale.id,item_id:r.itemId,item_name:r.itemName,
-      sku:items.find(i=>i.id===r.itemId)?.sku||'',
-      qty:r.qty,price:r.price,unit:r.unit||'pcs',amount:r.qty*r.price
+      sale_id:sale.id,item_id:Number(r.itemId),item_name:r.itemName,
+      sku:items.find(i=>i.id===Number(r.itemId))?.sku||'',
+      qty:Number(r.qty),price:Number(r.price),unit:r.unit||'pcs',amount:Number(r.qty)*Number(r.price)
     })));
     if(e2) throw e2;
     for(const r of validRows){
-      const it=items.find(x=>x.id===r.itemId);
-      if(it){
-        const newQty=Math.max(0,Number(it.qty)-Number(r.qty));
-        const mm=new Date().toISOString().slice(0,7);
-        let ms={};try{ms=JSON.parse(it.monthly_sales||'{}')}catch(e){}
-        ms[mm]=(ms[mm]||0)+Number(r.qty);
-        await sb.from('items').update({qty:newQty,monthly_sales:JSON.stringify(ms)}).eq('id',r.itemId);
-      }
+      const it=items.find(x=>Number(x.id)===Number(r.itemId));
+      if(!it){console.warn('Item not found for id:',r.itemId);continue;}
+      const newQty=Math.max(0,Number(it.qty)-Number(r.qty));
+      const mm=new Date().toISOString().slice(0,7);
+      let ms={};try{ms=JSON.parse(it.monthly_sales||'{}')}catch(e){}
+      ms[mm]=(ms[mm]||0)+Number(r.qty);
+      const{error:e3}=await sb.from('items').update({qty:newQty,monthly_sales:JSON.stringify(ms)}).eq('id',Number(it.id));
+      if(e3) throw new Error('Stock update failed: '+e3.message);
     }
     errEl.style.color='#27ae60';errEl.textContent='✅ Sale saved successfully!';
     setTimeout(()=>{errEl.textContent='';errEl.style.color='#c0392b';},3000);
@@ -950,13 +950,21 @@ async function submitChallan(){
       challan_id:ch.id,
       item_id:Number(r.itemId),
       item_name:r.itemName,
-      sku:items.find(i=>i.id===r.itemId)?.sku||'',
+      sku:items.find(i=>Number(i.id)===Number(r.itemId))?.sku||'',
       qty:Number(r.qty),
       unit:r.unit||'pcs',
       remarks:r.remarks||''
     }));
     const{error:e2}=await sb.from('challan_items').insert(ciPayload);
     if(e2) throw e2;
+    // Deduct stock for challan items too
+    for(const r of validRows){
+      const it=items.find(x=>Number(x.id)===Number(r.itemId));
+      if(!it){console.warn('Item not found for challan:',r.itemId);continue;}
+      const newQty=Math.max(0,Number(it.qty)-Number(r.qty));
+      const{error:e3}=await sb.from('items').update({qty:newQty}).eq('id',Number(it.id));
+      if(e3) throw new Error('Challan stock update failed: '+e3.message);
+    }
     errEl.style.color='#27ae60';errEl.textContent='✅ Challan saved successfully!';
     setTimeout(()=>{errEl.textContent='';errEl.style.color='#c0392b';},3000);
     resetChallanForm();await loadAll();
