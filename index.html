@@ -503,38 +503,68 @@ async function delItem(id){
 
 // ── BULK UPLOAD ───────────────────────────────────────
 function renderBulkPage(){
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
   document.getElementById('pg-bulk').innerHTML=`
   <div class="page-title">Bulk Inventory Upload</div>
   <div class="card">
-    <div class="card-title">CSV Upload</div>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">Columns: <b>item_code, sku, name, category, qty, threshold, unit, price, hsn, location, set_size</b></p>
+    <div class="card-title">CSV Upload — Insert / Update / Delete</div>
+    <div class="alert alert-info" style="margin-bottom:14px">
+      <b>Column Format:</b> <code>action, item_code, sku, name, category, qty, avg_30_day_sale, unit, price, hsn, location, set_size, ${months.join(', ')}</code><br><br>
+      <b>action column values:</b><br>
+      &nbsp;&nbsp;🟢 <b>insert</b> — naya item add karo<br>
+      &nbsp;&nbsp;🟡 <b>update</b> — existing item update karo (SKU se match hoga)<br>
+      &nbsp;&nbsp;🔴 <b>delete</b> — item delete karo (sirf SKU chahiye)
+    </div>
     <div class="upload-zone" id="drop-zone" onclick="document.getElementById('csv-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
       <div class="upload-icon">📂</div>
       <p>CSV file drag & drop karo</p>
-      <small>ya click karke select karo</small>
+      <small>ya click karke select karo • .csv format only</small>
     </div>
     <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="handleCSV(this.files[0])"/>
     <div id="bulk-preview" style="margin-top:16px"></div>
   </div>
   <div class="card">
-    <div class="card-title">Sample CSV Download</div>
+    <div class="card-title">📥 Sample CSV Download</div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">Sample mein last 6 months ke sales columns aur action column already hoga.</p>
     <button class="btn btn-outline" onclick="downloadSample()">⬇️ Download Sample CSV</button>
   </div>`;
 }
 
 function handleDrop(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag');handleCSV(e.dataTransfer.files[0]);}
+
 function handleCSV(file){
   if(!file) return;
   Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
     const rows=res.data;
+    const inserts=rows.filter(r=>(r.action||'insert').toLowerCase()==='insert');
+    const updates=rows.filter(r=>(r.action||'').toLowerCase()==='update');
+    const deletes=rows.filter(r=>(r.action||'').toLowerCase()==='delete');
     document.getElementById('bulk-preview').innerHTML=`
-      <div class="alert alert-info"><b>${rows.length} records found.</b></div>
-      <div class="tbl-wrap" style="max-height:250px;overflow-y:auto"><table>
-        <thead><tr><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Price</th></tr></thead>
-        <tbody>${rows.slice(0,8).map(r=>`<tr><td>${r.item_code||''}</td><td>${r.sku||''}</td><td>${r.name||''}</td><td>${r.category||''}</td><td>${r.qty||0}</td><td>₹${r.price||0}</td></tr>`).join('')}</tbody>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="background:#e9f7ef;color:#1a6636;padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600">🟢 Insert: ${inserts.length}</span>
+        <span style="background:#fdf2e9;color:#6e2c00;padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600">🟡 Update: ${updates.length}</span>
+        <span style="background:#fdecea;color:#922b21;padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600">🔴 Delete: ${deletes.length}</span>
+        <span style="background:#eaf4fb;color:#1a5276;padding:5px 14px;border-radius:6px;font-size:13px;font-weight:600">Total: ${rows.length}</span>
+      </div>
+      <div class="tbl-wrap" style="max-height:260px;overflow-y:auto"><table>
+        <thead><tr><th>Action</th><th>Code</th><th>SKU</th><th>Name</th><th>Category</th><th>Qty</th><th>Avg 30D Sale</th><th>Price</th></tr></thead>
+        <tbody>${rows.slice(0,12).map(r=>{
+          const act=(r.action||'insert').toLowerCase();
+          const color=act==='insert'?'#e9f7ef':act==='update'?'#fdf2e9':'#fdecea';
+          const textColor=act==='insert'?'#1a6636':act==='update'?'#6e2c00':'#922b21';
+          return`<tr style="background:${color}">
+            <td style="font-weight:700;color:${textColor}">${act.toUpperCase()}</td>
+            <td>${r.item_code||''}</td><td><b>${r.sku||''}</b></td>
+            <td>${r.name||''}</td><td>${r.category||''}</td>
+            <td>${r.qty||0}</td><td>${r.avg_30_day_sale||0}</td>
+            <td>₹${r.price||0}</td>
+          </tr>`;
+        }).join('')}</tbody>
       </table></div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn btn-primary" id="import-btn">✅ Import ${rows.length} Records</button>
+      ${rows.length>12?`<p style="font-size:12px;color:#aaa;margin-top:6px">... aur ${rows.length-12} records</p>`:''}
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary" id="import-btn">✅ Confirm & Import All ${rows.length}</button>
         <button class="btn btn-secondary" onclick="document.getElementById('bulk-preview').innerHTML=''">Cancel</button>
       </div>`;
     document.getElementById('import-btn').onclick=()=>importCSV(rows);
@@ -542,50 +572,98 @@ function handleCSV(file){
 }
 
 async function importCSV(rows){
-  let ok=0,err=0,errMsgs=[];
+  let inserted=0,updated=0,deleted=0,err=0,errMsgs=[];
+  const btn=document.getElementById('import-btn');
+  if(btn){btn.textContent='⏳ Processing...';btn.disabled=true;}
+
   for(const r of rows){
-    if(!r.name) continue;
-    // Extract monthly sales from columns like 2026-01, 2026-02 etc.
-    const ms={};
-    Object.keys(r).forEach(k=>{
-      if(/^\d{4}-\d{2}$/.test(k.trim())&&r[k]!==''&&r[k]!=null)
-        ms[k.trim()]=Number(r[k])||0;
-    });
-    const data={
-      item_code:r.item_code||'',sku:r.sku||'',name:r.name,
-      category:r.category||'Fabric',qty:Number(r.qty)||0,
-      threshold:Number(r.threshold)||10,unit:r.unit||'pcs',
-      price:Number(r.price)||0,hsn:r.hsn||'',location:r.location||'',
-      set_size:Number(r.set_size)||1,
-      monthly_sales:Object.keys(ms).length?JSON.stringify(ms):'{}'
-    };
-    // Upsert by SKU if exists
-    const existing=items.find(i=>i.sku&&i.sku===data.sku);
-    let error;
-    if(existing){
-      // Merge monthly sales
-      let existMs={};try{existMs=JSON.parse(existing.monthly_sales||'{}')}catch(e){}
-      const merged={...existMs,...ms};
-      ({error}=await sb.from('items').update({...data,monthly_sales:JSON.stringify(merged)}).eq('id',existing.id));
-    } else {
-      ({error}=await sb.from('items').insert(data));
-    }
-    if(error){err++;errMsgs.push(r.name+': '+error.message);}else ok++;
+    const action=(r.action||'insert').toLowerCase().trim();
+    try{
+      // Extract monthly sales columns (YYYY-MM format)
+      const ms={};
+      Object.keys(r).forEach(k=>{
+        if(/^\d{4}-\d{2}$/.test(k.trim())&&r[k]!==''&&r[k]!=null)
+          ms[k.trim()]=Number(r[k])||0;
+      });
+
+      // Calc threshold from avg_30_day_sale (15 day buffer)
+      const avg30=Number(r.avg_30_day_sale)||0;
+      const autoThreshold=avg30>0?Math.ceil((avg30/30)*15):10;
+
+      if(action==='delete'){
+        if(!r.sku){errMsgs.push('Delete: SKU missing');err++;continue;}
+        const{error}=await sb.from('items').delete().eq('sku',r.sku.trim());
+        if(error) throw error;
+        deleted++;
+      } else if(action==='update'){
+        if(!r.sku){errMsgs.push('Update: SKU missing');err++;continue;}
+        const existing=items.find(i=>i.sku===r.sku.trim());
+        let existMs={};
+        if(existing){try{existMs=JSON.parse(existing.monthly_sales||'{}')}catch(e){}}
+        const merged={...existMs,...ms};
+        const data={
+          item_code:r.item_code||'',name:r.name||'',
+          category:r.category||'Fabric',qty:Number(r.qty)||0,
+          threshold:autoThreshold,unit:r.unit||'pcs',
+          price:Number(r.price)||0,hsn:r.hsn||'',
+          location:r.location||'',set_size:Number(r.set_size)||1,
+          monthly_sales:JSON.stringify(merged)
+        };
+        const{error}=await sb.from('items').update(data).eq('sku',r.sku.trim());
+        if(error) throw error;
+        updated++;
+      } else {
+        // insert
+        if(!r.name){errMsgs.push('Insert: Name missing');err++;continue;}
+        const data={
+          item_code:r.item_code||'',sku:r.sku||'',name:r.name,
+          category:r.category||'Fabric',qty:Number(r.qty)||0,
+          threshold:autoThreshold,unit:r.unit||'pcs',
+          price:Number(r.price)||0,hsn:r.hsn||'',
+          location:r.location||'',set_size:Number(r.set_size)||1,
+          monthly_sales:Object.keys(ms).length?JSON.stringify(ms):'{}'
+        };
+        // Check duplicate SKU
+        const dup=items.find(i=>i.sku&&i.sku===data.sku);
+        if(dup){
+          // Auto-update if SKU exists
+          let existMs={};try{existMs=JSON.parse(dup.monthly_sales||'{}')}catch(e){}
+          const merged={...existMs,...ms};
+          const{error}=await sb.from('items').update({...data,monthly_sales:JSON.stringify(merged)}).eq('id',dup.id);
+          if(error) throw error;
+          updated++;
+        } else {
+          const{error}=await sb.from('items').insert(data);
+          if(error) throw error;
+          inserted++;
+        }
+      }
+    }catch(e){err++;errMsgs.push((r.sku||r.name||'row')+': '+e.message);}
   }
-  document.getElementById('bulk-preview').innerHTML=
-    `<div class="alert alert-success">✅ ${ok} imported/updated${err>0?`<br>❌ ${err} errors: ${errMsgs.join(', ')}`:''}</div>`;
+
+  document.getElementById('bulk-preview').innerHTML=`
+    <div class="alert alert-success">
+      <b>✅ Import Complete!</b><br>
+      🟢 Inserted: ${inserted} &nbsp;|&nbsp; 🟡 Updated: ${updated} &nbsp;|&nbsp; 🔴 Deleted: ${deleted}
+      ${err>0?`<br><br>❌ <b>${err} Errors:</b><br>${errMsgs.map(m=>`• ${m}`).join('<br>')}`:'' }
+    </div>`;
   await loadAll();
 }
 
 function downloadSample(){
-  // Build last 6 months headers
   const months=[];
   for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
-  const mHeaders=months.join(',');
-  const mVals1=months.map((_,i)=>[50,60,45,70,55,80][i]).join(',');
-  const mVals2=months.map((_,i)=>[120,110,130,100,140,115][i]).join(',');
-  const csv=`item_code,sku,name,category,qty,threshold,unit,price,hsn,location,set_size,${mHeaders}\nITM-001,FAB-001,Cotton Fabric,Fabric,100,20,meters,85,5208,Warehouse A,1,${mVals1}\nITM-002,ACC-001,Metal Buttons,Accessories,500,100,pcs,2.5,9606,Shelf B2,1,${mVals2}`;
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='styleys_sample_with_monthly_sales.csv';a.click();
+  const mH=months.join(',');
+  const rows=[
+    ['insert','ITM-001','FAB-001','Cotton Fabric','Fabric',100,50,'meters',85,'5208','Warehouse A',1,...[50,60,45,70,55,80]],
+    ['update','ITM-002','ACC-001','Metal Buttons','Accessories',500,120,'pcs',2.5,'9606','Shelf B2',1,...[120,110,130,100,140,115]],
+    ['delete','ITM-999','OLD-001','','','','','','','','','','','','','','',''],
+  ];
+  const header=`action,item_code,sku,name,category,qty,avg_30_day_sale,unit,price,hsn,location,set_size,${mH}`;
+  const csv=header+'\n'+rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='styleys_bulk_upload.csv';a.click();
 }
 
 // ── SALES ─────────────────────────────────────────────
