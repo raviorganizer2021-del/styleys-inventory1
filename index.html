@@ -216,6 +216,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="nav-item active" onclick="nav('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
       <div class="nav-item" onclick="nav('inventory',this)"><span class="nav-icon">📦</span>Inventory</div>
       <div class="nav-item" onclick="nav('bulk',this)"><span class="nav-icon">⬆️</span>Bulk Upload</div>
+      <div class="nav-item" onclick="nav('amazon',this)"><span class="nav-icon">🛒</span>Amazon Sales</div>
       <div class="nav-item" onclick="nav('sales',this)"><span class="nav-icon">🧾</span>Sales</div>
       <div class="nav-item" onclick="nav('challans',this)"><span class="nav-icon">🚚</span>Challans</div>
       <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
@@ -227,6 +228,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div id="pg-bulk" style="display:none"></div>
       <div id="pg-sales" style="display:none"></div>
       <div id="pg-challans" style="display:none"></div>
+      <div id="pg-amazon" style="display:none"></div>
       <div id="pg-settings" style="display:none"></div>
       <div id="pg-ai" style="display:none"></div>
     </div>
@@ -337,15 +339,15 @@ async function loadAll(){
 
 // ── NAV ───────────────────────────────────────────────
 function nav(pg,el){
-  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>{
-    const el=document.getElementById('pg-'+p);
-    if(el) el.style.display='none';
+  ['dashboard','inventory','bulk','amazon','sales','challans','settings','ai'].forEach(p=>{
+    const e=document.getElementById('pg-'+p);if(e) e.style.display='none';
   });
   document.getElementById('pg-'+pg).style.display='block';
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   el.classList.add('active');
   if(pg==='bulk') renderBulkPage();
   if(pg==='ai') renderAiPage();
+  if(pg==='amazon') renderAmazonPage();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
@@ -355,33 +357,192 @@ function renderDashboard(){
   const totalVal=items.reduce((s,i)=>s+Number(i.qty)*Number(i.price),0);
   const totalSales=sales.reduce((s,o)=>s+Number(o.total||0),0);
   const pending=sales.filter(o=>o.payment_status==='Pending').length;
-  const catTotals=CATS.map(c=>items.filter(i=>i.category===c).reduce((s,i)=>s+Number(i.qty),0));
-  const maxCat=Math.max(...catTotals,1);
+  const pendingAmt=sales.filter(o=>o.payment_status==='Pending').reduce((s,o)=>s+Number(o.total||0),0);
+  const allCats=[...new Set([...CATS,...items.map(i=>i.category).filter(Boolean)])];
+  const catData=allCats.map(c=>{
+    const catItems=items.filter(i=>i.category===c);
+    const qty=catItems.reduce((s,i)=>s+Number(i.qty),0);
+    const val=catItems.reduce((s,i)=>s+Number(i.qty)*Number(i.price),0);
+    const lowC=catItems.filter(i=>Number(i.qty)>0&&Number(i.qty)<=Number(i.threshold)).length;
+    const outC=catItems.filter(i=>Number(i.qty)<=0).length;
+    return{c,qty,val,skus:catItems.length,lowC,outC};
+  }).filter(x=>x.skus>0);
+  const maxQty=Math.max(...catData.map(x=>x.qty),1);
+
   document.getElementById('pg-dashboard').innerHTML=`
-  <div class="page-title">Dashboard</div>
+  <div class="page-title">Dashboard <span style="font-size:13px;color:#aaa;font-weight:400">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</span></div>
+
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total SKUs</div><div class="metric-value purple">${items.length}</div></div>
-    <div class="metric"><div class="metric-label">Low Stock</div><div class="metric-value red">${low.length}</div></div>
-    <div class="metric"><div class="metric-label">Out of Stock</div><div class="metric-value orange">${out.length}</div></div>
-    <div class="metric"><div class="metric-label">Inventory Value</div><div class="metric-value green">₹${Math.round(totalVal).toLocaleString('en-IN')}</div></div>
-    <div class="metric"><div class="metric-label">Total Sales</div><div class="metric-value purple">₹${Math.round(totalSales).toLocaleString('en-IN')}</div></div>
-    <div class="metric"><div class="metric-label">Pending Payment</div><div class="metric-value orange">${pending}</div></div>
-  </div>
-  ${low.length>0?`<div class="alert alert-danger"><b>⚠️ Low Stock:</b> ${low.map(i=>`${i.name} (${i.qty})`).join(', ')}</div>`:''}
-  ${out.length>0?`<div class="alert alert-info"><b>🚫 Out of Stock:</b> ${out.map(i=>i.name).join(', ')}</div>`:''}
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div class="card">
-      <div class="card-title">Stock by Category</div>
-      ${CATS.map((c,i)=>`<div class="bar-wrap"><div class="bar-label"><span>${c}</span><span>${catTotals[i]}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(catTotals[i]/maxCat*100)}%"></div></div></div>`).join('')}
+    <div class="metric" style="cursor:pointer" onclick="navToInventory('')">
+      <div class="metric-label">Total SKUs</div>
+      <div class="metric-value purple">${items.length}</div>
+      <div class="metric-sub">Click to view all</div>
     </div>
+    <div class="metric" style="cursor:pointer;border-left:3px solid #e74c3c" onclick="navToInventory('low')">
+      <div class="metric-label">Low Stock</div>
+      <div class="metric-value red">${low.length}</div>
+      <div class="metric-sub" style="color:#e74c3c">Click to view →</div>
+    </div>
+    <div class="metric" style="cursor:pointer;border-left:3px solid #e67e22" onclick="navToInventory('out')">
+      <div class="metric-label">Out of Stock</div>
+      <div class="metric-value orange">${out.length}</div>
+      <div class="metric-sub" style="color:#e67e22">Click to view →</div>
+    </div>
+    <div class="metric" style="cursor:pointer" onclick="navToInventory('ok')">
+      <div class="metric-label">In Stock</div>
+      <div class="metric-value green">${items.length-low.length-out.length}</div>
+      <div class="metric-sub" style="color:#27ae60">Click to view →</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Inventory Value</div>
+      <div class="metric-value green">₹${Math.round(totalVal).toLocaleString('en-IN')}</div>
+      <div class="metric-sub">At cost price</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Total Sales</div>
+      <div class="metric-value purple">₹${Math.round(totalSales).toLocaleString('en-IN')}</div>
+      <div class="metric-sub">${sales.length} orders</div>
+    </div>
+    <div class="metric" style="cursor:pointer;border-left:3px solid #e67e22" onclick="navToSales('Pending')">
+      <div class="metric-label">Pending Payment</div>
+      <div class="metric-value orange">${pending}</div>
+      <div class="metric-sub" style="color:#e67e22">₹${Math.round(pendingAmt).toLocaleString('en-IN')} due</div>
+    </div>
+  </div>
+
+  ${low.length>0?`<div class="alert alert-danger" style="cursor:pointer" onclick="navToInventory('low')">
+    <b>⚠️ Low Stock Alert — Click to view:</b> ${low.slice(0,6).map(i=>`<span style="background:#fcc;padding:1px 7px;border-radius:4px;margin:2px;display:inline-block">${i.name} (${i.qty} ${i.unit})</span>`).join('')}${low.length>6?` +${low.length-6} more`:''}
+  </div>`:''}
+  ${out.length>0?`<div class="alert alert-info" style="cursor:pointer" onclick="navToInventory('out')">
+    <b>🚫 Out of Stock — Click to view:</b> ${out.slice(0,6).map(i=>`<span style="background:#cce;padding:1px 7px;border-radius:4px;margin:2px;display:inline-block">${i.name}</span>`).join('')}${out.length>6?` +${out.length-6} more`:''}
+  </div>`:''}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
     <div class="card">
-      <div class="card-title">Recent Orders</div>
-      ${sales.slice(0,6).map(o=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f0ff;font-size:12px">
-        <div><b>${o.order_no}</b><br><span style="color:#999">${o.customer}</span></div>
-        <div style="text-align:right"><b>₹${Math.round(o.total||0).toLocaleString('en-IN')}</b><br><span class="badge ${o.payment_status==='Paid'?'badge-paid':'badge-pending'}">${o.payment_status}</span></div>
-      </div>`).join('')||'<div style="color:#ccc;font-size:13px;text-align:center;padding:20px">Koi orders nahi</div>'}
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        Category Overview
+        <button class="btn btn-secondary btn-sm" onclick="openCategoryManager()">✏️ Edit Categories</button>
+      </div>
+      ${catData.map(x=>`
+        <div style="margin-bottom:12px;cursor:pointer;padding:8px;border-radius:8px;transition:background 0.15s" onmouseover="this.style.background='#f5f0ff'" onmouseout="this.style.background=''" onclick="navToInventory('',${JSON.stringify(x.c)})">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-weight:600;font-size:13px">${x.c}</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              ${x.outC>0?`<span style="font-size:11px;background:#fdecea;color:#c0392b;padding:1px 7px;border-radius:10px">${x.outC} out</span>`:''}
+              ${x.lowC>0?`<span style="font-size:11px;background:#fdf2e9;color:#d35400;padding:1px 7px;border-radius:10px">${x.lowC} low</span>`:''}
+              <span style="font-size:12px;color:#888">${x.skus} SKUs</span>
+              <span style="font-size:12px;font-weight:600">${x.qty} units</span>
+            </div>
+          </div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(x.qty/maxQty*100)}%"></div></div>
+          <div style="font-size:11px;color:#aaa;margin-top:3px">Value: ₹${Math.round(x.val).toLocaleString('en-IN')}</div>
+        </div>`).join('')||'<div style="color:#ccc;text-align:center;padding:20px">Koi items nahi</div>'}
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+        Recent Orders
+        <button class="btn btn-secondary btn-sm" onclick="navToSales('')">View All →</button>
+      </div>
+      ${sales.slice(0,7).map(o=>`
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f0ff;font-size:12px;cursor:pointer" onclick="navToSales('')">
+          <div><b>${o.order_no}</b><span style="margin-left:8px;color:#999">${o.customer}</span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <b>₹${Math.round(o.total||0).toLocaleString('en-IN')}</b>
+            <span class="badge ${o.payment_status==='Paid'?'badge-paid':'badge-pending'}">${o.payment_status}</span>
+          </div>
+        </div>`).join('')||'<div style="color:#ccc;font-size:13px;text-align:center;padding:20px">Koi orders nahi</div>'}
     </div>
   </div>`;
+}
+
+function navToInventory(status,cat){
+  // Switch to inventory tab
+  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>{
+    const el=document.getElementById('pg-'+p);if(el) el.style.display='none';
+  });
+  document.getElementById('pg-inventory').style.display='block';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[1].classList.add('active');
+  renderInventoryPage();
+  // Apply filters after render
+  setTimeout(()=>{
+    if(status&&document.getElementById('inv-status')) document.getElementById('inv-status').value=status;
+    if(cat&&document.getElementById('inv-cat')) document.getElementById('inv-cat').value=cat;
+    filterInv();
+  },50);
+}
+
+function navToSales(status){
+  ['dashboard','inventory','bulk','sales','challans','settings','ai'].forEach(p=>{
+    const el=document.getElementById('pg-'+p);if(el) el.style.display='none';
+  });
+  document.getElementById('pg-sales').style.display='block';
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.nav-item')[3].classList.add('active');
+  renderSalesPage();
+  if(status){
+    setTimeout(()=>{
+      const q=document.getElementById('sale-q');
+      if(q){q.value=status;filterSales();}
+    },50);
+  }
+}
+
+// Category Manager
+function openCategoryManager(){
+  const allCats=[...new Set([...CATS,...items.map(i=>i.category).filter(Boolean)])];
+  const modal=document.createElement('div');
+  modal.className='modal-overlay';modal.id='cat-modal';
+  modal.innerHTML=`<div class="modal-box" style="width:420px">
+    <div class="modal-title">✏️ Edit Categories</div>
+    <div id="cat-list" style="margin-bottom:16px">
+      ${allCats.map((c,i)=>`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <input value="${c}" id="cat-inp-${i}" style="flex:1;padding:7px 10px;border-radius:6px;border:1.5px solid #e0d8f0;font-size:13px"/>
+          <button class="btn btn-danger btn-sm" onclick="removeCatRow(${i})">✕</button>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-secondary" style="margin-bottom:14px;width:100%" onclick="addCatRow()">+ Add Category</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveCategories()">Save Categories</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('cat-modal').remove()">Cancel</button>
+    </div>
+    <div id="cat-msg" style="font-size:12px;margin-top:8px"></div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function addCatRow(){
+  const list=document.getElementById('cat-list');
+  const idx=list.children.length;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+  div.id='cat-row-'+idx;
+  div.innerHTML=`<input value="" id="cat-inp-${idx}" style="flex:1;padding:7px 10px;border-radius:6px;border:1.5px solid #e0d8f0;font-size:13px" placeholder="New category naam..."/>
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+function removeCatRow(i){
+  const inp=document.getElementById('cat-inp-'+i);
+  if(inp) inp.closest('div').remove();
+}
+
+function saveCategories(){
+  const inputs=document.querySelectorAll('#cat-list input');
+  const newCats=[...inputs].map(i=>i.value.trim()).filter(Boolean);
+  if(!newCats.length){document.getElementById('cat-msg').textContent='Kam se kam ek category chahiye!';return;}
+  // Update CATS array
+  CATS.length=0;newCats.forEach(c=>CATS.push(c));
+  localStorage.setItem('categories',JSON.stringify(CATS));
+  document.getElementById('cat-msg').style.color='#27ae60';
+  document.getElementById('cat-msg').textContent='✅ Categories saved!';
+  setTimeout(()=>{
+    document.getElementById('cat-modal')?.remove();
+    renderDashboard();renderInventoryPage();
+  },800);
 }
 
 // ── INVENTORY ─────────────────────────────────────────
@@ -1132,7 +1293,261 @@ function printChallan(id){
   document.getElementById('print-modal').style.display='flex';
 }
 
-// ── SETTINGS ──────────────────────────────────────────
+// ── AMAZON SALES PAGE ─────────────────────────────────
+function renderAmazonPage(){
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+
+  document.getElementById('pg-amazon').innerHTML=`
+  <div class="page-title">🛒 Amazon Sales — Stock Runway Calculator</div>
+
+  <div class="card">
+    <div class="card-title">Upload Amazon Monthly Sales CSV</div>
+    <div class="alert alert-info" style="margin-bottom:14px">
+      <b>CSV Format:</b> <code>sku, ${months.join(', ')}</code><br>
+      <small>Amazon Seller Central → Reports → Sales → download karke SKU aur monthly qty dalo</small>
+    </div>
+    <div class="upload-zone" id="amz-drop" onclick="document.getElementById('amz-csv').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleAmazonDrop(event)">
+      <div class="upload-icon">🛒</div>
+      <p>Amazon Sales CSV drag & drop karo</p>
+      <small>ya click karke select karo</small>
+    </div>
+    <input type="file" id="amz-csv" accept=".csv" style="display:none" onchange="handleAmazonCSV(this.files[0])"/>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="downloadAmazonSample()">⬇️ Download Sample CSV</button>
+      <button class="btn btn-secondary" onclick="clearAmazonData()">🗑️ Clear Amazon Data</button>
+    </div>
+    <div id="amz-msg" style="margin-top:10px;font-size:13px"></div>
+  </div>
+
+  <div id="runway-section"></div>`;
+
+  renderRunwayTable();
+}
+
+function handleAmazonDrop(e){
+  e.preventDefault();
+  document.getElementById('amz-drop').classList.remove('drag');
+  handleAmazonCSV(e.dataTransfer.files[0]);
+}
+
+function handleAmazonCSV(file){
+  if(!file) return;
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
+    const rows=res.data;
+    const amazonData={};
+    rows.forEach(r=>{
+      const sku=(r.sku||r.SKU||r.ASIN||'').trim();
+      if(!sku) return;
+      if(!amazonData[sku]) amazonData[sku]={};
+      Object.keys(r).forEach(k=>{
+        const key=k.trim();
+        if(/^\d{4}-\d{2}$/.test(key)&&r[k]!==''){
+          amazonData[sku][key]=(amazonData[sku][key]||0)+Number(r[k]||0);
+        }
+      });
+    });
+    const skuCount=Object.keys(amazonData).length;
+    if(!skuCount){
+      document.getElementById('amz-msg').innerHTML='<span style="color:#c0392b">❌ Koi valid data nahi mila. SKU column aur YYYY-MM format ke month columns check karo.</span>';
+      return;
+    }
+    localStorage.setItem('amazon_sales',JSON.stringify(amazonData));
+    document.getElementById('amz-msg').innerHTML=`<span style="color:#27ae60">✅ ${skuCount} SKUs ka Amazon data saved! Runway table update ho raha hai...</span>`;
+    renderRunwayTable();
+  }});
+}
+
+function clearAmazonData(){
+  if(!confirm('Amazon data clear karna chahte ho?')) return;
+  localStorage.removeItem('amazon_sales');
+  document.getElementById('amz-msg').innerHTML='<span style="color:#888">Amazon data cleared.</span>';
+  renderRunwayTable();
+}
+
+function downloadAmazonSample(){
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const header='sku,'+months.join(',');
+  const rows=[
+    'FAB-001,50,60,45,70,55,80',
+    'ACC-001,120,110,130,100,140,115',
+    'PKG-001,200,180,220,190,210,195',
+  ];
+  const csv=header+'\n'+rows.join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='amazon_monthly_sales_sample.csv';a.click();
+}
+
+function getRunwayData(){
+  let amazonData={};
+  try{amazonData=JSON.parse(localStorage.getItem('amazon_sales')||'{}')}catch(e){}
+
+  return items.map(item=>{
+    const sku=item.sku||'';
+    // Offline sales from monthly_sales field
+    let offlineMs={};
+    try{offlineMs=JSON.parse(item.monthly_sales||'{}')}catch(e){}
+    const offlineMonths=Object.values(offlineMs);
+    const offlineAvg30=offlineMonths.length>0
+      ? offlineMonths.reduce((a,b)=>a+b,0)/offlineMonths.length : 0;
+
+    // Amazon sales
+    const amzMs=amazonData[sku]||{};
+    const amzMonths=Object.values(amzMs);
+    const amzAvg30=amzMonths.length>0
+      ? amzMonths.reduce((a,b)=>a+b,0)/amzMonths.length : 0;
+
+    // Combined
+    const totalAvg30=offlineAvg30+amzAvg30;
+    const dailyAvg=totalAvg30/30;
+    const qty=Number(item.qty)||0;
+    const daysLeft=dailyAvg>0?Math.round(qty/dailyAvg):null;
+
+    // Reorder suggestion
+    const reorderQty=Math.ceil(totalAvg30*2); // 2 months stock
+    const urgency=daysLeft===null?'no-data':daysLeft<=7?'critical':daysLeft<=15?'urgent':daysLeft<=30?'warning':'ok';
+
+    return{
+      ...item,sku,qty,
+      offlineAvg30:Math.round(offlineAvg30),
+      amzAvg30:Math.round(amzAvg30),
+      totalAvg30:Math.round(totalAvg30),
+      dailyAvg:dailyAvg.toFixed(1),
+      daysLeft,reorderQty,urgency,
+      offlineMonthlySales:offlineMs,
+      amazonMonthlySales:amzMs
+    };
+  }).sort((a,b)=>{
+    const order={critical:0,urgent:1,warning:2,ok:3,'no-data':4};
+    return(order[a.urgency]||4)-(order[b.urgency]||4);
+  });
+}
+
+function renderRunwayTable(){
+  const sec=document.getElementById('runway-section');
+  if(!sec) return;
+  let amazonData={};
+  try{amazonData=JSON.parse(localStorage.getItem('amazon_sales')||'{}')}catch(e){}
+  const hasAmz=Object.keys(amazonData).length>0;
+  const data=getRunwayData();
+  const critical=data.filter(d=>d.urgency==='critical').length;
+  const urgent=data.filter(d=>d.urgency==='urgent').length;
+  const warning=data.filter(d=>d.urgency==='warning').length;
+
+  const urgencyBadge=(u,days)=>{
+    if(u==='critical') return`<span style="background:#fdecea;color:#c0392b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🔴 ${days} days</span>`;
+    if(u==='urgent')   return`<span style="background:#fdf2e9;color:#d35400;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟠 ${days} days</span>`;
+    if(u==='warning')  return`<span style="background:#fefde6;color:#b7950b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟡 ${days} days</span>`;
+    if(u==='ok')       return`<span style="background:#e9f7ef;color:#1e8449;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟢 ${days} days</span>`;
+    return`<span style="background:#f5f5f5;color:#aaa;padding:3px 10px;border-radius:10px;font-size:11px">— No data</span>`;
+  };
+
+  sec.innerHTML=`
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="background:#fdecea;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
+      <div style="font-size:11px;color:#c0392b;font-weight:600">🔴 CRITICAL (≤7 days)</div>
+      <div style="font-size:24px;font-weight:700;color:#c0392b">${critical}</div>
+    </div>
+    <div style="background:#fdf2e9;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
+      <div style="font-size:11px;color:#d35400;font-weight:600">🟠 URGENT (≤15 days)</div>
+      <div style="font-size:24px;font-weight:700;color:#d35400">${urgent}</div>
+    </div>
+    <div style="background:#fefde6;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
+      <div style="font-size:11px;color:#b7950b;font-weight:600">🟡 WARNING (≤30 days)</div>
+      <div style="font-size:24px;font-weight:700;color:#b7950b">${warning}</div>
+    </div>
+    <div style="background:#e9f7ef;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
+      <div style="font-size:11px;color:#1e8449;font-weight:600">🟢 SAFE (>30 days)</div>
+      <div style="font-size:24px;font-weight:700;color:#1e8449">${data.filter(d=>d.urgency==='ok').length}</div>
+    </div>
+  </div>
+
+  ${!hasAmz?`<div class="alert alert-info">ℹ️ Abhi sirf offline sales se calculation ho rahi hai. Amazon CSV upload karo toh combined runway milega.</div>`:''}
+
+  <div class="card" style="padding:0">
+    <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:14px;font-weight:700;color:#444">SKU-wise Stock Runway</div>
+      <div style="display:flex;gap:8px">
+        <select id="runway-filter" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="applyRunwayFilter()">
+          <option value="">All Items</option>
+          <option value="critical">🔴 Critical only</option>
+          <option value="urgent">🟠 Urgent only</option>
+          <option value="warning">🟡 Warning only</option>
+          <option value="ok">🟢 Safe only</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="exportRunwayCSV()">⬇️ Export</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="runway-table">
+        <thead><tr>
+          <th>SKU</th><th>Name</th><th>Category</th>
+          <th style="text-align:center">Current Stock</th>
+          <th style="text-align:center">Offline Avg/mo</th>
+          <th style="text-align:center">Amazon Avg/mo</th>
+          <th style="text-align:center">Total Avg/mo</th>
+          <th style="text-align:center">Daily Avg</th>
+          <th style="text-align:center">Days Left</th>
+          <th style="text-align:center">Reorder Qty</th>
+        </tr></thead>
+        <tbody id="runway-tbody"></tbody>
+      </table>
+    </div>
+  </div>`;
+
+  renderRunwayRows(data);
+}
+
+function renderRunwayRows(data){
+  const urgencyBadge=(u,days)=>{
+    if(u==='critical') return`<span style="background:#fdecea;color:#c0392b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🔴 ${days}d</span>`;
+    if(u==='urgent')   return`<span style="background:#fdf2e9;color:#d35400;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟠 ${days}d</span>`;
+    if(u==='warning')  return`<span style="background:#fefde6;color:#b7950b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟡 ${days}d</span>`;
+    if(u==='ok')       return`<span style="background:#e9f7ef;color:#1e8449;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟢 ${days}d</span>`;
+    return`<span style="background:#f5f5f5;color:#aaa;padding:3px 10px;border-radius:10px;font-size:11px">—</span>`;
+  };
+  const tbody=document.getElementById('runway-tbody');
+  if(!tbody) return;
+  tbody.innerHTML=data.length===0
+    ?`<tr><td colspan="10" style="text-align:center;padding:24px;color:#ccc">Koi data nahi</td></tr>`
+    :data.map(d=>`<tr style="background:${d.urgency==='critical'?'#fff8f8':d.urgency==='urgent'?'#fffaf5':d.urgency==='warning'?'#fffef0':''}">
+      <td style="font-weight:600;color:#6c3fc5">${d.sku||'-'}</td>
+      <td style="font-weight:600">${d.name}</td>
+      <td style="font-size:12px">${d.category||'-'}</td>
+      <td style="text-align:center;font-weight:700;font-size:15px;color:${d.qty<=0?'#e74c3c':'#222'}">${d.qty} <span style="font-size:11px;color:#aaa">${d.unit}</span></td>
+      <td style="text-align:center">${d.offlineAvg30||'—'}</td>
+      <td style="text-align:center;color:#e67e22;font-weight:${d.amzAvg30>0?'600':'400'}">${d.amzAvg30||'—'}</td>
+      <td style="text-align:center;font-weight:600">${d.totalAvg30||'—'}</td>
+      <td style="text-align:center;font-size:12px;color:#888">${d.totalAvg30>0?d.dailyAvg:'—'}</td>
+      <td style="text-align:center">${urgencyBadge(d.urgency,d.daysLeft)}</td>
+      <td style="text-align:center;font-weight:600;color:#6c3fc5">${d.totalAvg30>0?d.reorderQty+'  '+d.unit:'—'}</td>
+    </tr>`).join('');
+}
+
+function applyRunwayFilter(){
+  const f=document.getElementById('runway-filter').value;
+  const data=getRunwayData().filter(d=>!f||d.urgency===f);
+  renderRunwayRows(data);
+}
+
+function exportRunwayCSV(){
+  const data=getRunwayData();
+  const headers='SKU,Name,Category,Current Stock,Unit,Offline Avg/Month,Amazon Avg/Month,Total Avg/Month,Daily Avg,Days Left,Reorder Qty';
+  const rows=data.map(d=>[
+    d.sku||'',d.name,d.category||'',d.qty,d.unit,
+    d.offlineAvg30,d.amzAvg30,d.totalAvg30,d.dailyAvg,
+    d.daysLeft||'No Data',d.totalAvg30>0?d.reorderQty:''
+  ].map(v=>`"${v}"`).join(','));
+  const csv=headers+'\n'+rows.join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='styleys_stock_runway.csv';a.click();
+}
 function renderSettingsPage(){
   const el=document.getElementById('pg-settings');if(!el) return;
   el.innerHTML=`
