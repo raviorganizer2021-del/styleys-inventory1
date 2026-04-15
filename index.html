@@ -1391,8 +1391,20 @@ function renderChinaPage(){
   <div class="card" style="margin-bottom:20px">
     <div class="card-title">China Stock Runway</div>
     <div id="china-runway-summary" style="margin-bottom:12px;font-size:13px;color:#555">${hasChinaStock?'<span style="color:#27ae60">Uploaded data available. Runway latest calculate ho raha hai.</span>':'Upload CSV karke run karo.'}</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input class="search-input" id="china-search" placeholder="🔍 Search SKU or Item Name..." oninput="applyChinaFilter()" style="width:200px;font-size:12px"/>
+      <select id="china-filter" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="applyChinaFilter()">
+        <option value="">All Items</option>
+        <option value="critical">🔴 Critical (≤7 days)</option>
+        <option value="urgent">🟠 Urgent (≤15 days)</option>
+        <option value="warning">🟡 Warning (≤30 days)</option>
+        <option value="ok">🟢 Safe (>30 days)</option>
+        <option value="order-needed">📦 Order Needed (Qty > 0)</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportChinaRunwayCSV()">⬇️ Export Runway</button>
+    </div>
     <div class="tbl-wrap"><table>
-      <thead><tr><th>SKU</th><th>Name</th><th style="text-align:center">Stock</th><th style="text-align:center">Avg/mo</th><th style="text-align:center">Days Left</th><th style="text-align:center">3mo Target</th><th style="text-align:center">Order Qty</th></tr></thead>
+      <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th style="text-align:center">Stock</th><th style="text-align:center">Avg/mo</th><th style="text-align:center">Days Left</th><th style="text-align:center">3mo Target</th><th style="text-align:center">Order Qty</th><th style="text-align:center">Priority</th></tr></thead>
       <tbody id="china-runway-body"></tbody>
     </table></div>
   </div>
@@ -1492,17 +1504,23 @@ function getChinaRunwayData(){
     const daysLeft = avgMonthly>0 ? Math.round(qty/(avgMonthly/30)) : null;
     const target3mo = Math.ceil(avgMonthly*3);
     const orderQty = Math.max(0, target3mo - qty);
+    const urgency = daysLeft===null?'no-data':daysLeft<=7?'critical':daysLeft<=15?'urgent':daysLeft<=30?'warning':'ok';
     rows.push({
       sku,
       itemName:item?.name||record.item_name||'-',
+      category:item?.category||'-',
       qty,
       avgMonthly:Math.round(avgMonthly),
       daysLeft,
       target3mo,
-      orderQty
+      orderQty,
+      urgency
     });
   });
-  return rows.sort((a,b)=>b.orderQty-a.orderQty);
+  return rows.sort((a,b)=>{
+    const order={critical:0,urgent:1,warning:2,ok:3,'no-data':4};
+    return(order[a.urgency]||4)-(order[b.urgency]||4);
+  });
 }
 
 function renderChinaRunwayTable(){
@@ -1510,20 +1528,82 @@ function renderChinaRunwayTable(){
   const tbody=document.getElementById('china-runway-body');
   if(!tbody) return;
   if(data.length===0){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Upload CSV karke run karo.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:#999">Upload CSV karke run karo.</td></tr>';
     return;
   }
   tbody.innerHTML=data.map(row=>`
     <tr>
       <td>${row.sku}</td>
       <td>${row.itemName}</td>
+      <td>${row.category}</td>
       <td style="text-align:center">${row.qty}</td>
       <td style="text-align:center">${row.avgMonthly||'—'}</td>
       <td style="text-align:center">${row.daysLeft!==null?row.daysLeft+' days':'—'}</td>
       <td style="text-align:center">${row.target3mo}</td>
       <td style="text-align:center;color:${row.orderQty>0?'#c0392b':'#27ae60'}">${row.orderQty}</td>
+      <td style="text-align:center">${getPriorityBadge(row.urgency)}</td>
     </tr>
   `).join('');
+}
+
+function getPriorityBadge(urgency){
+  if(urgency==='critical') return '<span style="background:#fdecea;color:#c0392b;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🔴 Critical</span>';
+  if(urgency==='urgent') return '<span style="background:#fdf2e9;color:#d35400;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟠 Urgent</span>';
+  if(urgency==='warning') return '<span style="background:#fefde6;color:#b7950b;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟡 Warning</span>';
+  if(urgency==='ok') return '<span style="background:#e9f7ef;color:#1e8449;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟢 Safe</span>';
+  return '<span style="background:#f5f5f5;color:#aaa;padding:3px 8px;border-radius:10px;font-size:11px">—</span>';
+}
+
+function applyChinaFilter(){
+  const search = (document.getElementById('china-search')?.value||'').toLowerCase();
+  const filter = document.getElementById('china-filter')?.value||'';
+  const data = getChinaRunwayData().filter(row=>{
+    const matchesSearch = !search || row.sku.toLowerCase().includes(search) || row.itemName.toLowerCase().includes(search);
+    const matchesFilter = !filter ||
+      (filter === 'order-needed' && row.orderQty > 0) ||
+      row.urgency === filter;
+    return matchesSearch && matchesFilter;
+  });
+  const tbody=document.getElementById('china-runway-body');
+  if(!tbody) return;
+  if(data.length===0){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:#999">Koi matching item nahi mila.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map(row=>`
+    <tr>
+      <td>${row.sku}</td>
+      <td>${row.itemName}</td>
+      <td>${row.category}</td>
+      <td style="text-align:center">${row.qty}</td>
+      <td style="text-align:center">${row.avgMonthly||'—'}</td>
+      <td style="text-align:center">${row.daysLeft!==null?row.daysLeft+' days':'—'}</td>
+      <td style="text-align:center">${row.target3mo}</td>
+      <td style="text-align:center;color:${row.orderQty>0?'#c0392b':'#27ae60'}">${row.orderQty}</td>
+      <td style="text-align:center">${getPriorityBadge(row.urgency)}</td>
+    </tr>
+  `).join('');
+}
+
+function exportChinaRunwayCSV(){
+  const data = getChinaRunwayData();
+  const headers = 'SKU,Item Name,Category,Current Stock,Avg Monthly Sale,Days Left,3 Month Target,Order Quantity,Priority';
+  const rows = data.map(row => [
+    row.sku,
+    row.itemName,
+    row.category,
+    row.qty,
+    row.avgMonthly || '',
+    row.daysLeft || '',
+    row.target3mo,
+    row.orderQty,
+    row.urgency || ''
+  ].map(v => `"${v}"`).join(','));
+  const csv = headers + '\n' + rows.join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'china_runway_export.csv';
+  a.click();
 }
 
 function handleChinaDrop(e){
@@ -1656,27 +1736,6 @@ function getChinaRunwayData(){
     });
   });
   return rows.sort((a,b)=>b.orderQty-a.orderQty);
-}
-
-function renderChinaRunwayTable(){
-  const data = getChinaRunwayData();
-  const tbody=document.getElementById('china-runway-body');
-  if(!tbody) return;
-  if(data.length===0){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Upload CSV karke run karo.</td></tr>';
-    return;
-  }
-  tbody.innerHTML=data.map(row=>`
-    <tr>
-      <td>${row.sku}</td>
-      <td>${row.itemName}</td>
-      <td style="text-align:center">${row.qty}</td>
-      <td style="text-align:center">${row.avgMonthly||'—'}</td>
-      <td style="text-align:center">${row.daysLeft!==null?row.daysLeft+' days':'—'}</td>
-      <td style="text-align:center">${row.target3mo}</td>
-      <td style="text-align:center;color:${row.orderQty>0?'#c0392b':'#27ae60'}">${row.orderQty}</td>
-    </tr>
-  `).join('');
 }
 
 function handleChinaDrop(e){
