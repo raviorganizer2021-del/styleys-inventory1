@@ -1331,6 +1331,85 @@ function renderAmazonPage(){
   renderRunwayTable();
 }
 
+function renderChinaPage(){
+  const plan = JSON.parse(localStorage.getItem('china_plan')||'[]');
+  document.getElementById('pg-china').innerHTML=`
+  <div class="page-title">🇨🇳 China Planner</div>
+  <div class="card">
+    <div class="card-title">China Sourcing Plan</div>
+    <div class="form-grid">
+      <div class="fg"><label>SKU / Item</label><input id="cp-item" placeholder="SKU ya item naam"/></div>
+      <div class="fg"><label>Supplier</label><input id="cp-supplier" placeholder="Supplier name"/></div>
+      <div class="fg"><label>Qty Needed</label><input id="cp-qty" type="number" value="1" min="1"/></div>
+      <div class="fg"><label>Estimated Cost (₹)</label><input id="cp-cost" type="number" value="0" min="0"/></div>
+      <div class="fg"><label>Delivery Date</label><input id="cp-date" type="date"/></div>
+      <div class="fg"><label>Status</label><select id="cp-status"><option>Pending</option><option>Confirmed</option><option>Received</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" onclick="saveChinaPlanItem()">Save Plan</button>
+      <button class="btn btn-secondary" onclick="clearChinaPlanForm()">Clear</button>
+    </div>
+    <div id="china-plan-msg" style="margin-top:10px;font-size:13px;color:#27ae60"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Saved China Plan Items</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>SKU / Item</th><th>Supplier</th><th>Qty</th><th>Cost</th><th>Delivery</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="china-plan-body"></tbody>
+    </table></div>
+  </div>`;
+  renderChinaPlanTable(plan);
+}
+
+function saveChinaPlanItem(){
+  const item=document.getElementById('cp-item').value.trim();
+  if(!item){document.getElementById('china-plan-msg').textContent='SKU / item required';return;}
+  const supplier=document.getElementById('cp-supplier').value.trim();
+  const qty=Number(document.getElementById('cp-qty').value)||0;
+  const cost=Number(document.getElementById('cp-cost').value)||0;
+  const date=document.getElementById('cp-date').value;
+  const status=document.getElementById('cp-status').value;
+  const plan=JSON.parse(localStorage.getItem('china_plan')||'[]');
+  plan.push({id:Date.now(),item,supplier,qty,cost,date,status});
+  localStorage.setItem('china_plan',JSON.stringify(plan));
+  document.getElementById('china-plan-msg').textContent='✅ China plan saved.';
+  clearChinaPlanForm();
+  renderChinaPlanTable(plan);
+}
+
+function clearChinaPlanForm(){
+  ['cp-item','cp-supplier','cp-qty','cp-cost','cp-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cp-status').value='Pending';
+  document.getElementById('china-plan-msg').textContent='';
+}
+
+function renderChinaPlanTable(plan){
+  plan = plan || JSON.parse(localStorage.getItem('china_plan')||'[]');
+  const tbody=document.getElementById('china-plan-body');
+  if(!tbody) return;
+  if(plan.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Koi China plan item nahi hai.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=plan.map(row=>`
+    <tr>
+      <td>${row.item}</td>
+      <td>${row.supplier||'-'}</td>
+      <td>${row.qty}</td>
+      <td>₹${row.cost}</td>
+      <td>${row.date||'-'}</td>
+      <td>${row.status}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteChinaPlanItem(${row.id})">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+function deleteChinaPlanItem(id){
+  const plan=JSON.parse(localStorage.getItem('china_plan')||'[]').filter(row=>row.id!==id);
+  localStorage.setItem('china_plan',JSON.stringify(plan));
+  renderChinaPlanTable(plan);
+}
+
 function handleAmazonDrop(e){
   e.preventDefault();
   document.getElementById('amz-drop').classList.remove('drag');
