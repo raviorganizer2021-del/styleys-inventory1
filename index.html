@@ -1343,7 +1343,7 @@ function handleAmazonCSV(file){
     const rows=res.data;
     const amazonData={};
     rows.forEach(r=>{
-      const sku=(r.sku||r.SKU||r.ASIN||'').trim();
+      const sku=String(r.sku||r.SKU||r.ASIN||'').trim().toUpperCase();
       if(!sku) return;
       if(!amazonData[sku]) amazonData[sku]={};
       Object.keys(r).forEach(k=>{
@@ -1441,6 +1441,10 @@ function renderRunwayTable(){
   const critical=data.filter(d=>d.urgency==='critical').length;
   const urgent=data.filter(d=>d.urgency==='urgent').length;
   const warning=data.filter(d=>d.urgency==='warning').length;
+  const itemSkus=new Set(items.map(i=>String(i.sku||'').trim().toUpperCase()).filter(Boolean));
+  const amazonSkus=Object.keys(amazonData);
+  const matchedSkus=amazonSkus.filter(sku=>itemSkus.has(sku)).length;
+  const unmatchedSkus=amazonSkus.length-matchedSkus;
 
   const urgencyBadge=(u,days)=>{
     if(u==='critical') return`<span style="background:#fdecea;color:#c0392b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🔴 ${days} days</span>`;
@@ -1470,7 +1474,9 @@ function renderRunwayTable(){
     </div>
   </div>
 
-  ${!hasAmz?`<div class="alert alert-info">ℹ️ Abhi sirf offline sales se calculation ho rahi hai. Amazon CSV upload karo toh combined runway milega.</div>`:''}
+  ${!hasAmz
+    ? `<div class="alert alert-info">ℹ️ Abhi sirf offline sales se calculation ho rahi hai. Amazon CSV upload karo toh combined runway milega.</div>`
+    : `<div style="margin-bottom:14px;font-size:13px;color:#555"><strong>Amazon SKUs:</strong> ${amazonSkus.length} total • ${matchedSkus} matched • ${unmatchedSkus} unmatched${unmatchedSkus>0?`<br><span style="color:#d35400">⚠️ Kuch SKUs item master se nahi mile. SKU format aur spaces check karo.</span>`:''}</div>`}
 
   <div class="card" style="padding:0">
     <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
