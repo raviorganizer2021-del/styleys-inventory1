@@ -217,6 +217,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div class="nav-item" onclick="nav('inventory',this)"><span class="nav-icon">📦</span>Inventory</div>
       <div class="nav-item" onclick="nav('bulk',this)"><span class="nav-icon">⬆️</span>Bulk Upload</div>
       <div class="nav-item" onclick="nav('amazon',this)"><span class="nav-icon">🛒</span>Amazon Sales</div>
+      <div class="nav-item" onclick="nav('china',this)"><span class="nav-icon">🇨🇳</span>China Planner</div>
       <div class="nav-item" onclick="nav('sales',this)"><span class="nav-icon">🧾</span>Sales</div>
       <div class="nav-item" onclick="nav('challans',this)"><span class="nav-icon">🚚</span>Challans</div>
       <div class="nav-item" onclick="nav('settings',this)"><span class="nav-icon">⚙️</span>Settings</div>
@@ -229,6 +230,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
       <div id="pg-sales" style="display:none"></div>
       <div id="pg-challans" style="display:none"></div>
       <div id="pg-amazon" style="display:none"></div>
+      <div id="pg-china" style="display:none"></div>
       <div id="pg-settings" style="display:none"></div>
       <div id="pg-ai" style="display:none"></div>
     </div>
@@ -339,7 +341,7 @@ async function loadAll(){
 
 // ── NAV ───────────────────────────────────────────────
 function nav(pg,el){
-  ['dashboard','inventory','bulk','amazon','sales','challans','settings','ai'].forEach(p=>{
+  ['dashboard','inventory','bulk','amazon','china','sales','challans','settings','ai'].forEach(p=>{
     const e=document.getElementById('pg-'+p);if(e) e.style.display='none';
   });
   document.getElementById('pg-'+pg).style.display='block';
@@ -348,6 +350,7 @@ function nav(pg,el){
   if(pg==='bulk') renderBulkPage();
   if(pg==='ai') renderAiPage();
   if(pg==='amazon') renderAmazonPage();
+  if(pg==='china') renderChinaPage();
 }
 
 // ── DASHBOARD ─────────────────────────────────────────
