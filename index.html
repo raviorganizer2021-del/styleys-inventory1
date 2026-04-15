@@ -1365,6 +1365,7 @@ function renderAmazonPage(){
 function renderChinaPage(){
   const plan = chinaPlan || [];
   const hasChinaStock = chinaStock.length>0;
+  const chinaCategories = [...new Set(items.map(i=>i.category).filter(Boolean))].sort();
   document.getElementById('pg-china').innerHTML=`
   <div class="page-title">🇨🇳 China Planner</div>
   <div class="card">
@@ -1400,6 +1401,22 @@ function renderChinaPage(){
         <option value="warning">🟡 Warning (≤30 days)</option>
         <option value="ok">🟢 Safe (>30 days)</option>
         <option value="order-needed">📦 Order Needed (Qty > 0)</option>
+      </select>
+      <select id="china-category" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="applyChinaFilter()">
+        <option value="">All Categories</option>
+        ${chinaCategories.map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+      <select id="china-sort" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="applyChinaFilter()">
+        <option value="">Sort by</option>
+        <option value="priority">Priority</option>
+        <option value="stock-desc">Stock ↓</option>
+        <option value="stock-asc">Stock ↑</option>
+        <option value="order-qty">Order Qty</option>
+        <option value="name">Name</option>
+      </select>
+      <select id="china-action" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="processChinaAction()">
+        <option value="">Action</option>
+        <option value="clear-uploaded">🗑️ Clear Uploaded Data</option>
       </select>
       <button class="btn btn-outline btn-sm" onclick="exportChinaRunwayCSV()">⬇️ Export Runway</button>
     </div>
@@ -1557,13 +1574,31 @@ function getPriorityBadge(urgency){
 function applyChinaFilter(){
   const search = (document.getElementById('china-search')?.value||'').toLowerCase();
   const filter = document.getElementById('china-filter')?.value||'';
-  const data = getChinaRunwayData().filter(row=>{
-    const matchesSearch = !search || row.sku.toLowerCase().includes(search) || row.itemName.toLowerCase().includes(search);
+  const category = document.getElementById('china-category')?.value||'';
+  const sortBy = document.getElementById('china-sort')?.value||'';
+
+  let data = getChinaRunwayData().filter(row=>{
+    const matchesSearch = !search || row.sku.toLowerCase().includes(search) || row.itemName.toLowerCase().includes(search) || row.category.toLowerCase().includes(search);
     const matchesFilter = !filter ||
       (filter === 'order-needed' && row.orderQty > 0) ||
       row.urgency === filter;
-    return matchesSearch && matchesFilter;
+    const matchesCategory = !category || row.category === category;
+    return matchesSearch && matchesFilter && matchesCategory;
   });
+
+  if(sortBy === 'priority'){
+    const order={critical:0,urgent:1,warning:2,ok:3,'no-data':4};
+    data.sort((a,b)=> (order[a.urgency]||5)-(order[b.urgency]||5) || b.orderQty-a.orderQty);
+  } else if(sortBy === 'stock-desc'){
+    data.sort((a,b)=>b.qty-a.qty);
+  } else if(sortBy === 'stock-asc'){
+    data.sort((a,b)=>a.qty-b.qty);
+  } else if(sortBy === 'order-qty'){
+    data.sort((a,b)=>b.orderQty-a.orderQty || (a.qty-b.qty));
+  } else if(sortBy === 'name'){
+    data.sort((a,b)=>a.itemName.localeCompare(b.itemName));
+  }
+
   const tbody=document.getElementById('china-runway-body');
   if(!tbody) return;
   if(data.length===0){
@@ -1583,6 +1618,16 @@ function applyChinaFilter(){
       <td style="text-align:center">${getPriorityBadge(row.urgency)}</td>
     </tr>
   `).join('');
+}
+
+function processChinaAction(){
+  const action = document.getElementById('china-action')?.value || '';
+  if(action === 'clear-uploaded'){
+    if(confirm('Confirm: clear all uploaded China stock data?')){
+      clearChinaStockData();
+    }
+    document.getElementById('china-action').value = '';
+  }
 }
 
 function exportChinaRunwayCSV(){
@@ -1698,330 +1743,6 @@ function clearChinaPlanForm(){
   document.getElementById('china-plan-msg').textContent='';
 }
 
-function renderChinaPlanTable(plan){
-  plan = plan || JSON.parse(localStorage.getItem('china_plan')||'[]');
-  const tbody=document.getElementById('china-plan-body');
-  if(!tbody) return;
-  if(plan.length===0){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Koi China plan item nahi hai.</td></tr>';
-    return;
-  }
-  tbody.innerHTML=plan.map(row=>`
-    <tr>
-      <td>${row.item}</td>
-      <td>${row.supplier||'-'}</td>
-      <td>${row.qty}</td>
-      <td>₹${row.cost}</td>
-      <td>${row.date||'-'}</td>
-      <td>${row.status}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteChinaPlanItem(${row.id})">Delete</button></td>
-    </tr>
-  `).join('');
-}
-
-function getChinaRunwayData(){
-  const chinaData = JSON.parse(localStorage.getItem('china_stock_data')||'{}');
-  const rows=[];
-  Object.keys(chinaData).forEach(sku=>{
-    const record=chinaData[sku];
-    const item = items.find(i=>String(i.sku||'').trim().toUpperCase()===sku);
-    const qty = Number(record.qty)||0;
-    const months=Object.values(record.monthly||{}).map(v=>Number(v)||0);
-    const avgMonthly = months.length>0 ? months.reduce((a,b)=>a+b,0)/months.length : 0;
-    const daysLeft = avgMonthly>0 ? Math.round(qty/(avgMonthly/30)) : null;
-    const target3mo = Math.ceil(avgMonthly*3);
-    const orderQty = Math.max(0, target3mo - qty);
-    rows.push({
-      sku,itemName:item?.name||record.name||'-',qty,avgMonthly:Math.round(avgMonthly),daysLeft,target3mo,orderQty,matchName:!!item
-    });
-  });
-  return rows.sort((a,b)=>b.orderQty-a.orderQty);
-}
-
-function handleChinaDrop(e){
-  e.preventDefault();
-  document.getElementById('china-drop').classList.remove('drag');
-  handleChinaCSV(e.dataTransfer.files[0]);
-}
-
-function handleChinaCSV(file){
-  if(!file) return;
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
-    const rows=res.data;
-    const chinaData={};
-    rows.forEach(r=>{
-      const sku=String(r.sku||r.SKU||r.ASIN||'').trim().toUpperCase();
-      if(!sku) return;
-      const qty=Number(r.qty||r.QTY||r.quantity||0);
-      if(!chinaData[sku]) chinaData[sku]={qty,monthly:{}};
-      chinaData[sku].qty = qty;
-      Object.keys(r).forEach(k=>{
-        const key=k.trim();
-        if(/^\d{4}-\d{2}$/.test(key)&&r[k]!==undefined&&r[k]!==null&&r[k]!==''){
-          chinaData[sku].monthly[key] = (chinaData[sku].monthly[key]||0)+Number(r[k]||0);
-        }
-      });
-    });
-    localStorage.setItem('china_stock_data',JSON.stringify(chinaData));
-    document.getElementById('china-stock-msg').innerHTML='<span style="color:#27ae60">✅ China stock data uploaded. Runway calculate ho raha hai...</span>';
-    renderChinaRunwayTable();
-  }});
-}
-
-function clearChinaStockData(){
-  if(!confirm('China stock upload data clear karna chahte ho?')) return;
-  localStorage.removeItem('china_stock_data');
-  document.getElementById('china-stock-msg').innerHTML='<span style="color:#888">China stock upload data cleared.</span>';
-  renderChinaRunwayTable();
-}
-
-function downloadChinaSample(){
-  const months=[];
-  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
-  const header='sku,qty,'+months.join(',');
-  const rows=[
-    'FAB-001,120,40,45,50,55,60,65',
-    'ACC-001,80,20,22,18,25,23,24',
-    'PKG-001,200,60,55,70,65,68,75'
-  ];
-  const csv=header+'\n'+rows.join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='china_stock_runway_sample.csv';a.click();
-}
-
-function deleteChinaPlanItem(id){
-  const plan=JSON.parse(localStorage.getItem('china_plan')||'[]').filter(row=>row.id!==id);
-  localStorage.setItem('china_plan',JSON.stringify(plan));
-  renderChinaPlanTable(plan);
-}
-
-function handleAmazonDrop(e){
-  e.preventDefault();
-  document.getElementById('amz-drop').classList.remove('drag');
-  handleAmazonCSV(e.dataTransfer.files[0]);
-}
-
-function handleAmazonCSV(file){
-  if(!file) return;
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
-    const rows=res.data;
-    const amazonData={};
-    rows.forEach(r=>{
-      const sku=String(r.sku||r.SKU||r.ASIN||'').trim().toUpperCase();
-      if(!sku) return;
-      if(!amazonData[sku]) amazonData[sku]={};
-      Object.keys(r).forEach(k=>{
-        const key=k.trim();
-        if(/^\d{4}-\d{2}$/.test(key)&&r[k]!==''){
-          amazonData[sku][key]=(amazonData[sku][key]||0)+Number(r[k]||0);
-        }
-      });
-    });
-    const skuCount=Object.keys(amazonData).length;
-    if(!skuCount){
-      document.getElementById('amz-msg').innerHTML='<span style="color:#c0392b">❌ Koi valid data nahi mila. SKU column aur YYYY-MM format ke month columns check karo.</span>';
-      return;
-    }
-    localStorage.setItem('amazon_sales',JSON.stringify(amazonData));
-    document.getElementById('amz-msg').innerHTML=`<span style="color:#27ae60">✅ ${skuCount} SKUs ka Amazon data saved! Runway table update ho raha hai...</span>`;
-    renderRunwayTable();
-  }});
-}
-
-function clearAmazonData(){
-  if(!confirm('Amazon data clear karna chahte ho?')) return;
-  localStorage.removeItem('amazon_sales');
-  document.getElementById('amz-msg').innerHTML='<span style="color:#888">Amazon data cleared.</span>';
-  renderRunwayTable();
-}
-
-function downloadAmazonSample(){
-  const months=[];
-  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
-  const header='sku,'+months.join(',');
-  const rows=[
-    'FAB-001,50,60,45,70,55,80',
-    'ACC-001,120,110,130,100,140,115',
-    'PKG-001,200,180,220,190,210,195',
-  ];
-  const csv=header+'\n'+rows.join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='amazon_monthly_sales_sample.csv';a.click();
-}
-
-function getRunwayData(){
-  let amazonData={};
-  try{amazonData=JSON.parse(localStorage.getItem('amazon_sales')||'{}')}catch(e){}
-
-  return items.map(item=>{
-    const sku=item.sku||'';
-    // Offline sales from monthly_sales field
-    let offlineMs={};
-    try{offlineMs=JSON.parse(item.monthly_sales||'{}')}catch(e){}
-    const offlineMonths=Object.values(offlineMs);
-    const offlineAvg30=offlineMonths.length>0
-      ? offlineMonths.reduce((a,b)=>a+b,0)/offlineMonths.length : 0;
-
-    // Amazon sales
-    const amzMs=amazonData[sku]||{};
-    const amzMonths=Object.values(amzMs);
-    const amzAvg30=amzMonths.length>0
-      ? amzMonths.reduce((a,b)=>a+b,0)/amzMonths.length : 0;
-
-    // Combined
-    const totalAvg30=offlineAvg30+amzAvg30;
-    const dailyAvg=totalAvg30/30;
-    const qty=Number(item.qty)||0;
-    const daysLeft=dailyAvg>0?Math.round(qty/dailyAvg):null;
-
-    // Reorder suggestion
-    const reorderQty=Math.ceil(totalAvg30*2); // 2 months stock
-    const urgency=daysLeft===null?'no-data':daysLeft<=7?'critical':daysLeft<=15?'urgent':daysLeft<=30?'warning':'ok';
-
-    return{
-      ...item,sku,qty,
-      offlineAvg30:Math.round(offlineAvg30),
-      amzAvg30:Math.round(amzAvg30),
-      totalAvg30:Math.round(totalAvg30),
-      dailyAvg:dailyAvg.toFixed(1),
-      daysLeft,reorderQty,urgency,
-      offlineMonthlySales:offlineMs,
-      amazonMonthlySales:amzMs
-    };
-  }).sort((a,b)=>{
-    const order={critical:0,urgent:1,warning:2,ok:3,'no-data':4};
-    return(order[a.urgency]||4)-(order[b.urgency]||4);
-  });
-}
-
-function renderRunwayTable(){
-  const sec=document.getElementById('runway-section');
-  if(!sec) return;
-  let amazonData={};
-  try{amazonData=JSON.parse(localStorage.getItem('amazon_sales')||'{}')}catch(e){}
-  const hasAmz=Object.keys(amazonData).length>0;
-  const data=getRunwayData();
-  const critical=data.filter(d=>d.urgency==='critical').length;
-  const urgent=data.filter(d=>d.urgency==='urgent').length;
-  const warning=data.filter(d=>d.urgency==='warning').length;
-  const itemSkus=new Set(items.map(i=>String(i.sku||'').trim().toUpperCase()).filter(Boolean));
-  const amazonSkus=Object.keys(amazonData);
-  const matchedSkus=amazonSkus.filter(sku=>itemSkus.has(sku)).length;
-  const unmatchedSkus=amazonSkus.length-matchedSkus;
-
-  const urgencyBadge=(u,days)=>{
-    if(u==='critical') return`<span style="background:#fdecea;color:#c0392b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🔴 ${days} days</span>`;
-    if(u==='urgent')   return`<span style="background:#fdf2e9;color:#d35400;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟠 ${days} days</span>`;
-    if(u==='warning')  return`<span style="background:#fefde6;color:#b7950b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟡 ${days} days</span>`;
-    if(u==='ok')       return`<span style="background:#e9f7ef;color:#1e8449;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟢 ${days} days</span>`;
-    return`<span style="background:#f5f5f5;color:#aaa;padding:3px 10px;border-radius:10px;font-size:11px">— No data</span>`;
-  };
-
-  sec.innerHTML=`
-  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-    <div style="background:#fdecea;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
-      <div style="font-size:11px;color:#c0392b;font-weight:600">🔴 CRITICAL (≤7 days)</div>
-      <div style="font-size:24px;font-weight:700;color:#c0392b">${critical}</div>
-    </div>
-    <div style="background:#fdf2e9;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
-      <div style="font-size:11px;color:#d35400;font-weight:600">🟠 URGENT (≤15 days)</div>
-      <div style="font-size:24px;font-weight:700;color:#d35400">${urgent}</div>
-    </div>
-    <div style="background:#fefde6;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
-      <div style="font-size:11px;color:#b7950b;font-weight:600">🟡 WARNING (≤30 days)</div>
-      <div style="font-size:24px;font-weight:700;color:#b7950b">${warning}</div>
-    </div>
-    <div style="background:#e9f7ef;border-radius:8px;padding:12px 18px;flex:1;min-width:120px">
-      <div style="font-size:11px;color:#1e8449;font-weight:600">🟢 SAFE (>30 days)</div>
-      <div style="font-size:24px;font-weight:700;color:#1e8449">${data.filter(d=>d.urgency==='ok').length}</div>
-    </div>
-  </div>
-
-  ${!hasAmz
-    ? `<div class="alert alert-info">ℹ️ Abhi sirf offline sales se calculation ho rahi hai. Amazon CSV upload karo toh combined runway milega.</div>`
-    : `<div style="margin-bottom:14px;font-size:13px;color:#555"><strong>Amazon SKUs:</strong> ${amazonSkus.length} total • ${matchedSkus} matched • ${unmatchedSkus} unmatched${unmatchedSkus>0?`<br><span style="color:#d35400">⚠️ Kuch SKUs item master se nahi mile. SKU format aur spaces check karo.</span>`:''}</div>`}
-
-  <div class="card" style="padding:0">
-    <div style="padding:16px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:14px;font-weight:700;color:#444">SKU-wise Stock Runway</div>
-      <div style="display:flex;gap:8px">
-        <select id="runway-filter" style="padding:6px 10px;border-radius:6px;border:1px solid #ddd;font-size:12px" onchange="applyRunwayFilter()">
-          <option value="">All Items</option>
-          <option value="critical">🔴 Critical only</option>
-          <option value="urgent">🟠 Urgent only</option>
-          <option value="warning">🟡 Warning only</option>
-          <option value="ok">🟢 Safe only</option>
-        </select>
-        <button class="btn btn-outline btn-sm" onclick="exportRunwayCSV()">⬇️ Export</button>
-      </div>
-    </div>
-    <div style="overflow-x:auto">
-      <table id="runway-table">
-        <thead><tr>
-          <th>SKU</th><th>Name</th><th>Category</th>
-          <th style="text-align:center">Current Stock</th>
-          <th style="text-align:center">Offline Avg/mo</th>
-          <th style="text-align:center">Amazon Avg/mo</th>
-          <th style="text-align:center">Total Avg/mo</th>
-          <th style="text-align:center">Daily Avg</th>
-          <th style="text-align:center">Days Left</th>
-          <th style="text-align:center">Reorder Qty</th>
-        </tr></thead>
-        <tbody id="runway-tbody"></tbody>
-      </table>
-    </div>
-  </div>`;
-
-  renderRunwayRows(data);
-}
-
-function renderRunwayRows(data){
-  const urgencyBadge=(u,days)=>{
-    if(u==='critical') return`<span style="background:#fdecea;color:#c0392b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🔴 ${days}d</span>`;
-    if(u==='urgent')   return`<span style="background:#fdf2e9;color:#d35400;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟠 ${days}d</span>`;
-    if(u==='warning')  return`<span style="background:#fefde6;color:#b7950b;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟡 ${days}d</span>`;
-    if(u==='ok')       return`<span style="background:#e9f7ef;color:#1e8449;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700">🟢 ${days}d</span>`;
-    return`<span style="background:#f5f5f5;color:#aaa;padding:3px 10px;border-radius:10px;font-size:11px">—</span>`;
-  };
-  const tbody=document.getElementById('runway-tbody');
-  if(!tbody) return;
-  tbody.innerHTML=data.length===0
-    ?`<tr><td colspan="10" style="text-align:center;padding:24px;color:#ccc">Koi data nahi</td></tr>`
-    :data.map(d=>`<tr style="background:${d.urgency==='critical'?'#fff8f8':d.urgency==='urgent'?'#fffaf5':d.urgency==='warning'?'#fffef0':''}">
-      <td style="font-weight:600;color:#6c3fc5">${d.sku||'-'}</td>
-      <td style="font-weight:600">${d.name}</td>
-      <td style="font-size:12px">${d.category||'-'}</td>
-      <td style="text-align:center;font-weight:700;font-size:15px;color:${d.qty<=0?'#e74c3c':'#222'}">${d.qty} <span style="font-size:11px;color:#aaa">${d.unit}</span></td>
-      <td style="text-align:center">${d.offlineAvg30||'—'}</td>
-      <td style="text-align:center;color:#e67e22;font-weight:${d.amzAvg30>0?'600':'400'}">${d.amzAvg30||'—'}</td>
-      <td style="text-align:center;font-weight:600">${d.totalAvg30||'—'}</td>
-      <td style="text-align:center;font-size:12px;color:#888">${d.totalAvg30>0?d.dailyAvg:'—'}</td>
-      <td style="text-align:center">${urgencyBadge(d.urgency,d.daysLeft)}</td>
-      <td style="text-align:center;font-weight:600;color:#6c3fc5">${d.totalAvg30>0?d.reorderQty+'  '+d.unit:'—'}</td>
-    </tr>`).join('');
-}
-
-function applyRunwayFilter(){
-  const f=document.getElementById('runway-filter').value;
-  const data=getRunwayData().filter(d=>!f||d.urgency===f);
-  renderRunwayRows(data);
-}
-
-function exportRunwayCSV(){
-  const data=getRunwayData();
-  const headers='SKU,Name,Category,Current Stock,Unit,Offline Avg/Month,Amazon Avg/Month,Total Avg/Month,Daily Avg,Days Left,Reorder Qty';
-  const rows=data.map(d=>[
-    d.sku||'',d.name,d.category||'',d.qty,d.unit,
-    d.offlineAvg30,d.amzAvg30,d.totalAvg30,d.dailyAvg,
-    d.daysLeft||'No Data',d.totalAvg30>0?d.reorderQty:''
-  ].map(v=>`"${v}"`).join(','));
-  const csv=headers+'\n'+rows.join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='styleys_stock_runway.csv';a.click();
-}
 function renderSettingsPage(){
   const el=document.getElementById('pg-settings');if(!el) return;
   el.innerHTML=`
