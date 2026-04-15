@@ -160,10 +160,32 @@ CREATE TABLE IF NOT EXISTS challan_items (
   item_id bigint, item_name text, sku text,
   qty numeric, unit text, remarks text
 );
+CREATE TABLE IF NOT EXISTS china_stock (
+  id bigserial primary key,
+  sku text unique,
+  item_name text,
+  qty numeric default 0,
+  monthly_sales text default '{}',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+CREATE TABLE IF NOT EXISTS china_plan (
+  id bigserial primary key,
+  sku text,
+  item_name text,
+  supplier text,
+  qty_needed numeric default 0,
+  estimated_cost numeric default 0,
+  delivery_date date,
+  status text default 'Pending',
+  created_at timestamptz default now()
+);
 -- Add missing columns if tables already exist
 ALTER TABLE items ADD COLUMN IF NOT EXISTS item_code text;
 ALTER TABLE items ADD COLUMN IF NOT EXISTS set_size numeric DEFAULT 1;
 ALTER TABLE items ADD COLUMN IF NOT EXISTS monthly_sales text DEFAULT '{}';
+ALTER TABLE china_stock ADD COLUMN IF NOT EXISTS monthly_sales text DEFAULT '{}';
+ALTER TABLE china_stock ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS color text DEFAULT '';
 ALTER TABLE sales ADD COLUMN IF NOT EXISTS created_by text DEFAULT '';
 ALTER TABLE challans ADD COLUMN IF NOT EXISTS color text DEFAULT '';
@@ -180,11 +202,15 @@ DROP POLICY IF EXISTS "all" ON sales;
 DROP POLICY IF EXISTS "all" ON sale_items;
 DROP POLICY IF EXISTS "all" ON challans;
 DROP POLICY IF EXISTS "all" ON challan_items;
+DROP POLICY IF EXISTS "all" ON china_stock;
+DROP POLICY IF EXISTS "all" ON china_plan;
 CREATE POLICY "all" ON items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON sales FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON sale_items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "all" ON challans FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</div>
+CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "all" ON china_stock FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "all" ON china_plan FOR ALL USING (true) WITH CHECK (true);</div>
     <div style="margin-top:16px">
       <div class="fg" style="margin-bottom:10px">
         <label>Supabase Project URL</label>
@@ -279,7 +305,7 @@ CREATE POLICY "all" ON challan_items FOR ALL USING (true) WITH CHECK (true);</di
 </div>
 
 <script>
-let sb=null, items=[], sales=[], challans=[], editingItemId=null;
+let sb=null, items=[], sales=[], challans=[], chinaStock=[], chinaPlan=[], editingItemId=null;
 let challanCounter=null; // auto-increment challan number
 const CATS=['Fabric','Accessories','Packaging','Finished Goods','Raw Material','Other'];
 let settings={
@@ -324,15 +350,20 @@ function logout(){localStorage.removeItem('sb_url');localStorage.removeItem('sb_
 // ── LOAD DATA ─────────────────────────────────────────
 async function loadAll(){
   try{
-    const[a,b,c]=await Promise.all([
+    const[a,b,c,d,e]=await Promise.all([
       sb.from('items').select('*').order('name'),
       sb.from('sales').select('*,sale_items(*)').order('id',{ascending:false}),
-      sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false})
+      sb.from('challans').select('*,challan_items(*)').order('id',{ascending:false}),
+      sb.from('china_stock').select('*'),
+      sb.from('china_plan').select('*').order('id',{ascending:false})
     ]);
     if(a.error) throw new Error('Items load error: '+a.error.message);
     if(b.error) throw new Error('Sales load error: '+b.error.message);
     if(c.error) throw new Error('Challans load error: '+c.error.message);
+    if(d.error) throw new Error('China stock load error: '+d.error.message);
+    if(e.error) throw new Error('China plan load error: '+e.error.message);
     items=a.data||[];sales=b.data||[];challans=c.data||[];
+    chinaStock=d.data||[];chinaPlan=e.data||[];
     renderDashboard();renderInventoryPage();renderSalesPage();renderChallansPage();renderSettingsPage();
   }catch(e){
     alert('Data load error: '+e.message+'\n\nSQL Editor mein fix SQL zaroor run karo.');
@@ -1332,9 +1363,39 @@ function renderAmazonPage(){
 }
 
 function renderChinaPage(){
-  const plan = JSON.parse(localStorage.getItem('china_plan')||'[]');
+  const plan = chinaPlan || [];
+  const hasChinaStock = chinaStock.length>0;
   document.getElementById('pg-china').innerHTML=`
   <div class="page-title">🇨🇳 China Planner</div>
+  <div class="card">
+    <div class="card-title">Upload Available Stock + Monthly Sales</div>
+    <div class="alert alert-info" style="margin-bottom:14px">
+      <b>CSV Format:</b> <code>sku, qty, ${Array.from({length:6}).map((_,i)=>{const d=new Date();d.setMonth(d.getMonth()-5+i);return d.toISOString().slice(0,7);}).join(', ')}</code><br>
+      <small>Item wise current available stock aur monthly sales upload karo. Software 3 month stock benchmark ke hisaab se reorder calculate karega.</small>
+    </div>
+    <div class="upload-zone" id="china-drop" onclick="document.getElementById('china-csv').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleChinaDrop(event)">
+      <div class="upload-icon">📤</div>
+      <p>China stock CSV drag & drop karo</p>
+      <small>ya click karke select karo</small>
+    </div>
+    <input type="file" id="china-csv" accept=".csv" style="display:none" onchange="handleChinaCSV(this.files[0])"/>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="downloadChinaSample()">⬇️ Download Sample CSV</button>
+      <button class="btn btn-secondary" onclick="clearChinaStockData()">🗑️ Clear Uploaded Data</button>
+    </div>
+    <div id="china-stock-msg" style="margin-top:10px;font-size:13px;color:#27ae60"></div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">China Stock Runway</div>
+    <div id="china-runway-summary" style="margin-bottom:12px;font-size:13px;color:#555">${hasChinaStock?'<span style="color:#27ae60">Uploaded data available. Runway latest calculate ho raha hai.</span>':'Upload CSV karke run karo.'}</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>SKU</th><th>Name</th><th style="text-align:center">Stock</th><th style="text-align:center">Avg/mo</th><th style="text-align:center">Days Left</th><th style="text-align:center">3mo Target</th><th style="text-align:center">Order Qty</th></tr></thead>
+      <tbody id="china-runway-body"></tbody>
+    </table></div>
+  </div>
   <div class="card">
     <div class="card-title">China Sourcing Plan</div>
     <div class="form-grid">
@@ -1359,9 +1420,183 @@ function renderChinaPage(){
     </table></div>
   </div>`;
   renderChinaPlanTable(plan);
+  renderChinaRunwayTable();
 }
 
-function saveChinaPlanItem(){
+async function saveChinaPlanItem(){
+  const item=document.getElementById('cp-item').value.trim();
+  if(!item){document.getElementById('china-plan-msg').textContent='SKU / item required';return;}
+  const supplier=document.getElementById('cp-supplier').value.trim();
+  const qty=Number(document.getElementById('cp-qty').value)||0;
+  const cost=Number(document.getElementById('cp-cost').value)||0;
+  const date=document.getElementById('cp-date').value;
+  const status=document.getElementById('cp-status').value;
+  try{
+    const {error}=await sb.from('china_plan').insert({
+      sku:item.toUpperCase(),
+      item_name:item,
+      supplier,
+      qty_needed:qty,
+      estimated_cost:cost,
+      delivery_date:date||null,
+      status
+    });
+    if(error) throw error;
+    document.getElementById('china-plan-msg').textContent='✅ China plan saved.';
+    clearChinaPlanForm();
+    await loadAll();
+    renderChinaPage();
+  }catch(e){
+    document.getElementById('china-plan-msg').textContent='Error: '+e.message;
+  }
+}
+
+function clearChinaPlanForm(){
+  ['cp-item','cp-supplier','cp-qty','cp-cost','cp-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cp-status').value='Pending';
+  document.getElementById('china-plan-msg').textContent='';
+}
+
+function renderChinaPlanTable(plan){
+  plan = plan || chinaPlan || [];
+  const tbody=document.getElementById('china-plan-body');
+  if(!tbody) return;
+  if(plan.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Koi China plan item nahi hai.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=plan.map(row=>`
+    <tr>
+      <td>${row.item_name||row.sku||'-'}</td>
+      <td>${row.supplier||'-'}</td>
+      <td>${row.qty_needed||0}</td>
+      <td>₹${row.estimated_cost||0}</td>
+      <td>${row.delivery_date||'-'}</td>
+      <td>${row.status||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteChinaPlanItem(${row.id})">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+function getChinaRunwayData(){
+  const rows=[];
+  chinaStock.forEach(record=>{
+    const sku=String(record.sku||'').trim().toUpperCase();
+    if(!sku) return;
+    const item = items.find(i=>String(i.sku||'').trim().toUpperCase()===sku);
+    const qty = Number(record.qty)||0;
+    let monthly={};
+    try{monthly=JSON.parse(record.monthly_sales||'{}')}catch(e){monthly={};}
+    const months=Object.values(monthly).map(v=>Number(v)||0);
+    const avgMonthly = months.length>0 ? months.reduce((a,b)=>a+b,0)/months.length : 0;
+    const daysLeft = avgMonthly>0 ? Math.round(qty/(avgMonthly/30)) : null;
+    const target3mo = Math.ceil(avgMonthly*3);
+    const orderQty = Math.max(0, target3mo - qty);
+    rows.push({
+      sku,
+      itemName:item?.name||record.item_name||'-',
+      qty,
+      avgMonthly:Math.round(avgMonthly),
+      daysLeft,
+      target3mo,
+      orderQty
+    });
+  });
+  return rows.sort((a,b)=>b.orderQty-a.orderQty);
+}
+
+function renderChinaRunwayTable(){
+  const data = getChinaRunwayData();
+  const tbody=document.getElementById('china-runway-body');
+  if(!tbody) return;
+  if(data.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Upload CSV karke run karo.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map(row=>`
+    <tr>
+      <td>${row.sku}</td>
+      <td>${row.itemName}</td>
+      <td style="text-align:center">${row.qty}</td>
+      <td style="text-align:center">${row.avgMonthly||'—'}</td>
+      <td style="text-align:center">${row.daysLeft!==null?row.daysLeft+' days':'—'}</td>
+      <td style="text-align:center">${row.target3mo}</td>
+      <td style="text-align:center;color:${row.orderQty>0?'#c0392b':'#27ae60'}">${row.orderQty}</td>
+    </tr>
+  `).join('');
+}
+
+function handleChinaDrop(e){
+  e.preventDefault();
+  document.getElementById('china-drop').classList.remove('drag');
+  handleChinaCSV(e.dataTransfer.files[0]);
+}
+
+async function handleChinaCSV(file){
+  if(!file) return;
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete: async res=>{
+    const rows=res.data;
+    const chinaData={};
+    rows.forEach(r=>{
+      const sku=String(r.sku||r.SKU||r.ASIN||'').trim().toUpperCase();
+      if(!sku) return;
+      const qty=Number(r.qty||r.QTY||r.quantity||0);
+      if(!chinaData[sku]) chinaData[sku]={qty,monthly:{}};
+      chinaData[sku].qty = qty;
+      Object.keys(r).forEach(k=>{
+        const key=k.trim();
+        if(/^\d{4}-\d{2}$/.test(key)&&r[k]!==undefined&&r[k]!==null&&r[k]!=='' ){
+          chinaData[sku].monthly[key] = (chinaData[sku].monthly[key]||0)+Number(r[k]||0);
+        }
+      });
+    });
+    const payload=Object.entries(chinaData).map(([sku,record])=>({
+      sku,
+      item_name:record.name||'',
+      qty:record.qty,
+      monthly_sales:JSON.stringify(record.monthly),
+      updated_at:new Date().toISOString()
+    }));
+    const {error}=await sb.from('china_stock').upsert(payload,{onConflict:'sku'});
+    if(error){document.getElementById('china-stock-msg').innerHTML='<span style="color:#c0392b">Error: '+error.message+'</span>';return;}
+    document.getElementById('china-stock-msg').innerHTML='<span style="color:#27ae60">✅ China stock data uploaded. Runway calculate ho raha hai...</span>';
+    await loadAll();
+    renderChinaPage();
+  }});
+}
+
+async function clearChinaStockData(){
+  if(!confirm('China stock upload data clear karna chahte ho?')) return;
+  const {error}=await sb.from('china_stock').delete().neq('id',0);
+  if(error){alert('Clear error: '+error.message);return;}
+  document.getElementById('china-stock-msg').innerHTML='<span style="color:#888">China stock upload data cleared.</span>';
+  await loadAll();
+  renderChinaPage();
+}
+
+function downloadChinaSample(){
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const header='sku,qty,'+months.join(',');
+  const rows=[
+    'FAB-001,120,40,45,50,55,60,65',
+    'ACC-001,80,20,22,18,25,23,24',
+    'PKG-001,200,60,55,70,65,68,75'
+  ];
+  const csv=header+'\n'+rows.join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='china_stock_runway_sample.csv';a.click();
+}
+
+async function deleteChinaPlanItem(id){
+  const {error}=await sb.from('china_plan').delete().eq('id',id);
+  if(error){alert('Delete error: '+error.message);return;}
+  await loadAll();
+  renderChinaPage();
+}
+
+function handleAmazonDrop(e){
   const item=document.getElementById('cp-item').value.trim();
   if(!item){document.getElementById('china-plan-msg').textContent='SKU / item required';return;}
   const supplier=document.getElementById('cp-supplier').value.trim();
@@ -1402,6 +1637,98 @@ function renderChinaPlanTable(plan){
       <td><button class="btn btn-danger btn-sm" onclick="deleteChinaPlanItem(${row.id})">Delete</button></td>
     </tr>
   `).join('');
+}
+
+function getChinaRunwayData(){
+  const chinaData = JSON.parse(localStorage.getItem('china_stock_data')||'{}');
+  const rows=[];
+  Object.keys(chinaData).forEach(sku=>{
+    const record=chinaData[sku];
+    const item = items.find(i=>String(i.sku||'').trim().toUpperCase()===sku);
+    const qty = Number(record.qty)||0;
+    const months=Object.values(record.monthly||{}).map(v=>Number(v)||0);
+    const avgMonthly = months.length>0 ? months.reduce((a,b)=>a+b,0)/months.length : 0;
+    const daysLeft = avgMonthly>0 ? Math.round(qty/(avgMonthly/30)) : null;
+    const target3mo = Math.ceil(avgMonthly*3);
+    const orderQty = Math.max(0, target3mo - qty);
+    rows.push({
+      sku,itemName:item?.name||record.name||'-',qty,avgMonthly:Math.round(avgMonthly),daysLeft,target3mo,orderQty,matchName:!!item
+    });
+  });
+  return rows.sort((a,b)=>b.orderQty-a.orderQty);
+}
+
+function renderChinaRunwayTable(){
+  const data = getChinaRunwayData();
+  const tbody=document.getElementById('china-runway-body');
+  if(!tbody) return;
+  if(data.length===0){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#999">Upload CSV karke run karo.</td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map(row=>`
+    <tr>
+      <td>${row.sku}</td>
+      <td>${row.itemName}</td>
+      <td style="text-align:center">${row.qty}</td>
+      <td style="text-align:center">${row.avgMonthly||'—'}</td>
+      <td style="text-align:center">${row.daysLeft!==null?row.daysLeft+' days':'—'}</td>
+      <td style="text-align:center">${row.target3mo}</td>
+      <td style="text-align:center;color:${row.orderQty>0?'#c0392b':'#27ae60'}">${row.orderQty}</td>
+    </tr>
+  `).join('');
+}
+
+function handleChinaDrop(e){
+  e.preventDefault();
+  document.getElementById('china-drop').classList.remove('drag');
+  handleChinaCSV(e.dataTransfer.files[0]);
+}
+
+function handleChinaCSV(file){
+  if(!file) return;
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:res=>{
+    const rows=res.data;
+    const chinaData={};
+    rows.forEach(r=>{
+      const sku=String(r.sku||r.SKU||r.ASIN||'').trim().toUpperCase();
+      if(!sku) return;
+      const qty=Number(r.qty||r.QTY||r.quantity||0);
+      if(!chinaData[sku]) chinaData[sku]={qty,monthly:{}};
+      chinaData[sku].qty = qty;
+      Object.keys(r).forEach(k=>{
+        const key=k.trim();
+        if(/^\d{4}-\d{2}$/.test(key)&&r[k]!==undefined&&r[k]!==null&&r[k]!==''){
+          chinaData[sku].monthly[key] = (chinaData[sku].monthly[key]||0)+Number(r[k]||0);
+        }
+      });
+    });
+    localStorage.setItem('china_stock_data',JSON.stringify(chinaData));
+    document.getElementById('china-stock-msg').innerHTML='<span style="color:#27ae60">✅ China stock data uploaded. Runway calculate ho raha hai...</span>';
+    renderChinaRunwayTable();
+  }});
+}
+
+function clearChinaStockData(){
+  if(!confirm('China stock upload data clear karna chahte ho?')) return;
+  localStorage.removeItem('china_stock_data');
+  document.getElementById('china-stock-msg').innerHTML='<span style="color:#888">China stock upload data cleared.</span>';
+  renderChinaRunwayTable();
+}
+
+function downloadChinaSample(){
+  const months=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  const header='sku,qty,'+months.join(',');
+  const rows=[
+    'FAB-001,120,40,45,50,55,60,65',
+    'ACC-001,80,20,22,18,25,23,24',
+    'PKG-001,200,60,55,70,65,68,75'
+  ];
+  const csv=header+'\n'+rows.join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='china_stock_runway_sample.csv';a.click();
 }
 
 function deleteChinaPlanItem(id){
