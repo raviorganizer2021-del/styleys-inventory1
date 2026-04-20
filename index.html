@@ -1434,92 +1434,434 @@ function downloadAmazonSample(){
 }
 
 // ═══════════════════════════════════════════════════
-// CHINA PLANNER
+// CHINA PLANNER — PRO VERSION
 // ═══════════════════════════════════════════════════
-function renderChinaPage(){
-  document.getElementById('pg-china').innerHTML=`
-  <div class="page-title">🇨🇳 China Planner</div>
-  <div class="card"><div class="card-title">Upload China Stock CSV</div>
-    <div class="alert alert-info"><b>Format:</b> <code>sku, qty, YYYY-MM, YYYY-MM...</code></div>
-    <div class="upload-zone" id="china-drop" onclick="document.getElementById('china-csv').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleChinaDrop(event)">
-      <div class="upload-icon">📤</div><p>China CSV drop karo</p>
-    </div>
-    <input type="file" id="china-csv" accept=".csv" style="display:none" onchange="handleChinaCSV(this.files[0])"/>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-outline" onclick="downloadChinaSample()">⬇️ Sample</button>
-      <button class="btn btn-secondary" onclick="clearChinaData()">🗑️ Clear</button>
-    </div>
-    <div id="china-stock-msg" style="margin-top:8px;font-size:13px"></div>
-  </div>
-  <div class="card"><div class="card-title">China Stock Runway</div>
-    <div class="tbl-wrap"><table><thead><tr><th>SKU</th><th>Item</th><th>Stock</th><th>Avg/mo</th><th>Days Left</th><th>3mo Target</th><th>Order Qty</th><th>Priority</th></tr></thead>
-    <tbody id="china-runway-body"></tbody></table></div>
-  </div>
-  <div class="card"><div class="card-title">Sourcing Plan</div>
-    <div class="form-grid">
-      <div class="fg"><label>SKU/Item</label><input id="cp-item"/></div>
-      <div class="fg"><label>Supplier</label><input id="cp-supplier"/></div>
-      <div class="fg"><label>Qty Needed</label><input id="cp-qty" type="number" value="1" min="1"/></div>
-      <div class="fg"><label>Est. Cost (₹)</label><input id="cp-cost" type="number" value="0"/></div>
-      <div class="fg"><label>Delivery Date</label><input id="cp-date" type="date"/></div>
-      <div class="fg"><label>Status</label><select id="cp-status"><option>Pending</option><option>Confirmed</option><option>Received</option></select></div>
-    </div>
-    <button class="btn btn-primary" onclick="saveChinaPlan()">Save Plan</button>
-    <div id="china-plan-msg" style="margin-top:8px;font-size:13px;color:#27ae60"></div>
-    <div class="tbl-wrap" style="margin-top:14px"><table><thead><tr><th>SKU/Item</th><th>Supplier</th><th>Qty</th><th>Cost</th><th>Delivery</th><th>Status</th><th>Del</th></tr></thead>
-    <tbody>${(chinaPlan||[]).map(row=>`<tr><td>${row.item_name||row.sku||'-'}</td><td>${row.supplier||'-'}</td><td>${row.qty_needed}</td><td>₹${row.estimated_cost}</td><td>${row.delivery_date||'-'}</td><td>${row.status}</td><td><button class="btn btn-danger btn-sm" onclick="delChinaPlan(${row.id})">✕</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:16px;color:#ccc">Koi plan nahi</td></tr>'}</tbody>
-    </table></div>
-  </div>`;
-  renderChinaRunway();
+let chinaCfg={bench:3,lead:45,buffer:10,currency:'CNY',defaultSupplier:''};
+let chinaRunwayData=[];
+let editingOrderId=null;
+
+function loadChinaCfg(){
+  chinaCfg.bench=parseInt(localStorage.getItem('cp_bench')||'3');
+  chinaCfg.lead=parseInt(localStorage.getItem('cp_lead')||'45');
+  chinaCfg.buffer=parseInt(localStorage.getItem('cp_buffer')||'10');
+  chinaCfg.currency=localStorage.getItem('cp_currency')||'CNY';
+  chinaCfg.defaultSupplier=localStorage.getItem('cp_supplier')||'';
 }
 
-function renderChinaRunway(){
-  const tbody=document.getElementById('china-runway-body');if(!tbody) return;
-  if(!chinaStock.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:#ccc">CSV upload karo</td></tr>';return;}
-  const rows=chinaStock.map(record=>{
-    const sku=String(record.sku||'').trim().toUpperCase();
-    const qty=Number(record.qty)||0;
-    let monthly={};try{monthly=JSON.parse(record.monthly_sales||'{}')}catch(e){}
-    const vals=Object.values(monthly).map(v=>Number(v)||0);
-    const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
-    const days=avg>0?Math.round(qty/(avg/30)):null;
-    const t3=Math.ceil(avg*3);
-    const oq=Math.max(0,t3-qty);
-    const urgency=days===null?'no-data':days<=7?'critical':days<=15?'urgent':days<=30?'warning':'ok';
-    const item=items.find(i=>String(i.sku||'').toUpperCase()===sku);
-    return{sku,name:item?.name||record.item_name||'-',qty,avg:Math.round(avg),days,t3,oq,urgency};
-  }).sort((a,b)=>{const o={critical:0,urgent:1,warning:2,ok:3,'no-data':4};return(o[a.urgency]||4)-(o[b.urgency]||4);});
-  tbody.innerHTML=rows.map(r=>`<tr>
-    <td>${r.sku}</td><td>${r.name}</td>
-    <td style="text-align:center">${r.qty}</td>
-    <td style="text-align:center">${r.avg||'—'}</td>
-    <td style="text-align:center;font-weight:600;color:${r.days!==null&&r.days<=15?'#e74c3c':'#222'}">${r.days!==null?r.days+' days':'—'}</td>
-    <td style="text-align:center">${r.t3}</td>
-    <td style="text-align:center;color:${r.oq>0?'#c0392b':'#27ae60'};font-weight:600">${r.oq}</td>
-    <td style="text-align:center">${getPriorityBadge(r.urgency)}</td>
+function buildChinaRunway(){
+  loadChinaCfg();
+  chinaRunwayData=chinaStock.map(rec=>{
+    const sku=String(rec.sku||'').trim().toUpperCase();
+    const qty=Number(rec.qty)||0;
+    let ms={};try{ms=JSON.parse(rec.monthly_sales||'{}')}catch(e){}
+    const vals=Object.values(ms).map(Number).filter(v=>v>0);
+    const avgM=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+    const dailyAvg=avgM/30;
+    const bufFactor=1+(chinaCfg.buffer/100);
+    const targetStock=Math.ceil(avgM*chinaCfg.bench*bufFactor);
+    const leadBuffer=Math.ceil(dailyAvg*chinaCfg.lead);
+    const orderQty=Math.max(0,targetStock+leadBuffer-qty);
+    const daysLeft=dailyAvg>0?Math.round(qty/dailyAvg):null;
+    const urgency=daysLeft===null?'nodata':daysLeft<=7?'critical':daysLeft<=15?'urgent':daysLeft<=30?'warning':'safe';
+    const invItem=items.find(i=>String(i.sku||'').toUpperCase()===sku);
+    return{sku,itemName:invItem?.name||rec.item_name||sku,category:invItem?.category||rec.category||'-',unit:rec.unit||invItem?.unit||'pcs',qty,avgM:Math.round(avgM),dailyAvg:dailyAvg.toFixed(1),daysLeft,targetStock,leadBuffer,orderQty,urgency};
+  }).sort((a,b)=>{const o={critical:0,urgent:1,warning:2,safe:3,nodata:4};return(o[a.urgency]||5)-(o[b.urgency]||5);});
+}
+
+function renderChinaPage(){
+  buildChinaRunway();
+  loadChinaCfg();
+  const critical=chinaRunwayData.filter(r=>r.urgency==='critical').length;
+  const urgent=chinaRunwayData.filter(r=>r.urgency==='urgent').length;
+  const warning=chinaRunwayData.filter(r=>r.urgency==='warning').length;
+  const safe=chinaRunwayData.filter(r=>r.urgency==='safe').length;
+  const activeOrders=(chinaPlan||[]).filter(o=>!['Received','Cancelled'].includes(o.status)).length;
+  const shipped=(chinaPlan||[]).filter(o=>o.status==='Shipped').length;
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+
+  document.getElementById('pg-china').innerHTML=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div class="page-title" style="margin-bottom:2px">🇨🇳 China Procurement Planner</div>
+      <div style="font-size:12px;color:#aaa">Benchmark: <b style="color:#6c3fc5">${chinaCfg.bench} months</b> &nbsp;|&nbsp; Lead time: <b style="color:#6c3fc5">${chinaCfg.lead} days</b> &nbsp;|&nbsp; Buffer: <b style="color:#6c3fc5">${chinaCfg.buffer}%</b></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="exportChinaRunwayCSV()">⬇️ Export Runway</button>
+      <button class="btn btn-primary btn-sm" onclick="chinaBulkCreateOrders()">📋 Bulk Create Orders</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+    <div class="metric" style="border-top:4px solid #e74c3c"><div class="metric-label">🔴 Critical</div><div class="metric-value red">${critical}</div><div class="metric-sub">≤7 days stock</div></div>
+    <div class="metric" style="border-top:4px solid #e67e22"><div class="metric-label">🟠 Urgent</div><div class="metric-value orange">${urgent}</div><div class="metric-sub">≤15 days</div></div>
+    <div class="metric" style="border-top:4px solid #f39c12"><div class="metric-label">🟡 Warning</div><div class="metric-value" style="color:#b7950b">${warning}</div><div class="metric-sub">≤30 days</div></div>
+    <div class="metric" style="border-top:4px solid #27ae60"><div class="metric-label">🟢 Safe</div><div class="metric-value green">${safe}</div><div class="metric-sub">${chinaCfg.bench}m+ stock</div></div>
+    <div class="metric" style="border-top:4px solid #6c3fc5"><div class="metric-label">📋 Active POs</div><div class="metric-value purple">${activeOrders}</div><div class="metric-sub">Purchase orders</div></div>
+    <div class="metric" style="border-top:4px solid #1abc9c"><div class="metric-label">🚢 In Transit</div><div class="metric-value" style="color:#1abc9c">${shipped}</div><div class="metric-sub">Awaiting delivery</div></div>
+  </div>
+
+  <!-- CHINA SUB-TABS -->
+  <div style="display:flex;border-bottom:2px solid #e8e0f5;margin-bottom:16px;gap:4px">
+    <button class="china-tab active" id="ctab-runway" onclick="switchChinaTab('runway')" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#6c3fc5;border-bottom:3px solid #6c3fc5;cursor:pointer;margin-bottom:-2px">📈 Stock Runway</button>
+    <button class="china-tab" id="ctab-upload" onclick="switchChinaTab('upload')" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-2px">📤 Upload Data</button>
+    <button class="china-tab" id="ctab-orders" onclick="switchChinaTab('orders')" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-2px">🛒 Purchase Orders</button>
+    <button class="china-tab" id="ctab-tracker" onclick="switchChinaTab('tracker')" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-2px">🚢 Shipment Tracker</button>
+    <button class="china-tab" id="ctab-settings" onclick="switchChinaTab('settings')" style="padding:10px 18px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:3px solid transparent;cursor:pointer;margin-bottom:-2px">⚙️ Settings</button>
+  </div>
+
+  <!-- RUNWAY SUB-TAB -->
+  <div id="china-tab-runway">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:#f5f0ff;border-radius:8px;padding:12px;margin-bottom:14px">
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase">SEARCH</label>
+        <input id="crw-search" placeholder="SKU / Name..." oninput="renderChinaRunwayTable()" style="padding:7px 11px;border-radius:7px;border:1.5px solid #d4c5f0;font-size:12px;width:180px"/></div>
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase">PRIORITY</label>
+        <select id="crw-filter" onchange="renderChinaRunwayTable()" style="padding:7px 11px;border-radius:7px;border:1.5px solid #d4c5f0;font-size:12px">
+          <option value="">All</option><option value="critical">🔴 Critical</option><option value="urgent">🟠 Urgent</option><option value="warning">🟡 Warning</option><option value="safe">🟢 Safe</option><option value="order">📦 Needs Order</option>
+        </select></div>
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase">CATEGORY</label>
+        <select id="crw-cat" onchange="renderChinaRunwayTable()" style="padding:7px 11px;border-radius:7px;border:1.5px solid #d4c5f0;font-size:12px">
+          <option value="">All Categories</option>
+          ${[...new Set(chinaRunwayData.map(r=>r.category).filter(c=>c&&c!=='-'))].map(c=>`<option>${c}</option>`).join('')}
+        </select></div>
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase">BENCHMARK (Mo)</label>
+        <input id="crw-bench" type="number" value="${chinaCfg.bench}" min="1" max="12" onchange="updateChinaCfgLive()" style="padding:7px 11px;border-radius:7px;border:1.5px solid #d4c5f0;font-size:12px;width:70px"/></div>
+      <div><label style="font-size:10px;color:#888;display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase">LEAD TIME (Days)</label>
+        <input id="crw-lead" type="number" value="${chinaCfg.lead}" min="1" onchange="updateChinaCfgLive()" style="padding:7px 11px;border-radius:7px;border:1.5px solid #d4c5f0;font-size:12px;width:70px"/></div>
+    </div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th><input type="checkbox" id="crw-chk-all" onchange="toggleChinaAll(this)"/></th>
+        <th>SKU</th><th>Item Name</th><th>Category</th>
+        <th style="text-align:center">Stock</th>
+        <th style="text-align:center">Avg/Mo</th>
+        <th style="text-align:center">Daily</th>
+        <th style="text-align:center">Days Left</th>
+        <th style="text-align:center">${chinaCfg.bench}M Target</th>
+        <th style="text-align:center">Lead Buffer</th>
+        <th style="text-align:center;background:#fff3e0;color:#d35400">🛒 Order Qty</th>
+        <th style="text-align:center">Priority</th>
+        <th>Action</th>
+      </tr></thead>
+      <tbody id="crw-tbody"></tbody>
+    </table></div>
+  </div>
+
+  <!-- UPLOAD SUB-TAB -->
+  <div id="china-tab-upload" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div class="card-title">📊 Combined CSV (Stock + Sales)</div>
+        <div class="alert alert-info" style="font-size:12px"><b>Columns:</b> sku, item_name, category, qty, unit, ${months.slice(0,3).join(', ')}...</div>
+        <div class="upload-zone" id="china-drop-combined" onclick="document.getElementById('china-csv-combined').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleChinaDrop(event,'combined')">
+          <div class="upload-icon">📊</div><p>Combined CSV drop karo</p><small>sku + qty + monthly sales</small>
+        </div>
+        <input type="file" id="china-csv-combined" accept=".csv" style="display:none" onchange="handleChinaCSV(this.files[0],'combined')"/>
+      </div>
+      <div class="card">
+        <div class="card-title">📦 Stock Only CSV</div>
+        <div class="alert alert-info" style="font-size:12px"><b>Columns:</b> sku, item_name, qty, unit</div>
+        <div class="upload-zone" id="china-drop-stock" onclick="document.getElementById('china-csv-stock').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleChinaDrop(event,'stock')">
+          <div class="upload-icon">📦</div><p>Stock CSV drop karo</p>
+        </div>
+        <input type="file" id="china-csv-stock" accept=".csv" style="display:none" onchange="handleChinaCSV(this.files[0],'stock')"/>
+        <div style="margin-top:14px">
+          <div class="card-title" style="margin-top:8px">📈 Sales Only CSV</div>
+          <div class="alert alert-info" style="font-size:12px"><b>Columns:</b> sku, ${months.slice(0,3).join(', ')}...</div>
+          <div class="upload-zone" id="china-drop-sales" onclick="document.getElementById('china-csv-sales').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleChinaDrop(event,'sales')" style="padding:16px">
+            <div class="upload-icon" style="font-size:24px">📈</div><p>Sales CSV drop karo</p>
+          </div>
+          <input type="file" id="china-csv-sales" accept=".csv" style="display:none" onchange="handleChinaCSV(this.files[0],'sales')"/>
+        </div>
+      </div>
+    </div>
+    <div id="china-upload-preview"></div>
+    <div class="card">
+      <div class="card-title">⬇️ Sample Downloads</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="downloadChinaSampleNew('combined')">📊 Combined Sample</button>
+        <button class="btn btn-outline" onclick="downloadChinaSampleNew('stock')">📦 Stock Sample</button>
+        <button class="btn btn-outline" onclick="downloadChinaSampleNew('sales')">📈 Sales Sample</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🗂️ Uploaded Data Status</div>
+      <div id="china-upload-status"></div>
+      <div style="margin-top:12px"><button class="btn btn-danger btn-sm" onclick="clearChinaData()">🗑️ Clear All China Stock Data</button></div>
+    </div>
+    ${renderChinaUploadStatus()}
+  </div>
+
+  <!-- ORDERS SUB-TAB -->
+  <div id="china-tab-orders" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;color:#333">Purchase Orders</div>
+      <button class="btn btn-primary btn-sm" onclick="openChinaOrderModal(null)">+ New PO</button>
+    </div>
+    <div id="china-order-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input class="search-input" id="cord-search" placeholder="🔍 Search orders..." oninput="renderChinaOrdersTable()" style="font-size:12px"/>
+      <select id="cord-status" onchange="renderChinaOrdersTable()" style="padding:8px 12px;border-radius:8px;border:1.5px solid #e0d8f0;font-size:12px">
+        <option value="">All Status</option>
+        <option>Pending</option><option>Confirmed</option><option>Ordered</option><option>Shipped</option><option>Received</option><option>Cancelled</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportChinaOrders()">⬇️ Export</button>
+    </div>
+    <div id="china-orders-list"></div>
+  </div>
+
+  <!-- TRACKER SUB-TAB -->
+  <div id="china-tab-tracker" style="display:none">
+    <div id="china-tracker-content"></div>
+  </div>
+
+  <!-- SETTINGS SUB-TAB -->
+  <div id="china-tab-settings" style="display:none">
+    <div class="card"><div class="card-title">Procurement Settings</div>
+      <div class="form-grid">
+        <div class="fg"><label>Benchmark (Months)</label><input id="cpst-bench" type="number" value="${chinaCfg.bench}" min="1" max="12"/></div>
+        <div class="fg"><label>Lead Time (Days)</label><input id="cpst-lead" type="number" value="${chinaCfg.lead}" min="1"/></div>
+        <div class="fg"><label>Safety Buffer (%)</label><input id="cpst-buffer" type="number" value="${chinaCfg.buffer}" min="0" max="50"/></div>
+        <div class="fg"><label>Currency</label><select id="cpst-currency"><option${chinaCfg.currency==='CNY'?' selected':''}>CNY</option><option${chinaCfg.currency==='USD'?' selected':''}>USD</option><option${chinaCfg.currency==='INR'?' selected':''}>INR</option></select></div>
+        <div class="fg" style="grid-column:1/-1"><label>Default Supplier</label><input id="cpst-supplier" value="${chinaCfg.defaultSupplier}" placeholder="Default China supplier naam"/></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveChinaSettings()">Save Settings</button>
+      <span id="cpst-msg" style="margin-left:12px;font-size:13px;color:#27ae60"></span>
+    </div>
+  </div>
+
+  <!-- ORDER MODAL -->
+  <div id="china-order-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;display:none;align-items:center;justify-content:center" onclick="if(event.target===this)closeChinaOrderModal()">
+    <div style="background:#fff;border-radius:14px;padding:24px;width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <span style="font-size:16px;font-weight:700;color:#333" id="china-order-modal-title">New Purchase Order</span>
+        <button class="btn btn-secondary btn-sm" onclick="closeChinaOrderModal()">✕ Close</button>
+      </div>
+      <div class="form-grid">
+        <div class="fg"><label>Order Ref # *</label><input id="com-ref" placeholder="e.g. PO-2026-001"/></div>
+        <div class="fg"><label>SKU *</label><input id="com-sku"/></div>
+        <div class="fg"><label>Item Name *</label><input id="com-name"/></div>
+        <div class="fg"><label>Category</label><input id="com-cat"/></div>
+        <div class="fg"><label>Supplier *</label><input id="com-supplier"/></div>
+        <div class="fg"><label>Unit</label><select id="com-unit"><option>pcs</option><option>kg</option><option>meters</option><option>boxes</option><option>rolls</option><option>sets</option></select></div>
+        <div class="fg"><label>Qty Ordered *</label><input id="com-qty" type="number" value="0" min="1" oninput="calcChinaOrderTotal()"/></div>
+        <div class="fg"><label>Unit Cost</label><input id="com-cost" type="number" value="0" oninput="calcChinaOrderTotal()"/></div>
+        <div class="fg"><label>Currency</label><select id="com-currency"><option>CNY</option><option>USD</option><option>INR</option></select></div>
+        <div class="fg"><label>Total Cost</label><input id="com-total" readonly style="background:#f5f5f5"/></div>
+        <div class="fg"><label>Order Date</label><input id="com-odate" type="date"/></div>
+        <div class="fg"><label>Expected Delivery</label><input id="com-edate" type="date"/></div>
+        <div class="fg" style="grid-column:1/-1"><label>Status</label>
+          <select id="com-status"><option>Pending</option><option>Confirmed</option><option>Ordered</option><option>Shipped</option><option>Received</option><option>Cancelled</option></select>
+        </div>
+        <div class="fg" style="grid-column:1/-1"><label>Notes</label><textarea id="com-notes" rows="2" style="width:100%;padding:8px 11px;border-radius:7px;border:1.5px solid #e0d8f0;resize:none;font-size:13px"></textarea></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="saveChinaOrder()">💾 Save Order</button>
+        <button class="btn btn-secondary" onclick="closeChinaOrderModal()">Cancel</button>
+      </div>
+      <div id="com-err" style="color:#c0392b;font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>`;
+
+  renderChinaRunwayTable();
+  renderChinaOrdersSummary();
+  renderChinaOrdersTable();
+  renderChinaTracker();
+}
+
+function switchChinaTab(tab){
+  ['runway','upload','orders','tracker','settings'].forEach(t=>{
+    const el=document.getElementById('china-tab-'+t);if(el) el.style.display='none';
+    const btn=document.getElementById('ctab-'+t);
+    if(btn){btn.style.color='#888';btn.style.borderBottomColor='transparent';}
+  });
+  const show=document.getElementById('china-tab-'+tab);if(show) show.style.display='block';
+  const activeBtn=document.getElementById('ctab-'+tab);
+  if(activeBtn){activeBtn.style.color='#6c3fc5';activeBtn.style.borderBottomColor='#6c3fc5';}
+  if(tab==='tracker') renderChinaTracker();
+  if(tab==='upload') renderChinaUploadStatusEl();
+}
+
+function updateChinaCfgLive(){
+  const b=parseInt(document.getElementById('crw-bench')?.value||chinaCfg.bench);
+  const l=parseInt(document.getElementById('crw-lead')?.value||chinaCfg.lead);
+  chinaCfg.bench=b;chinaCfg.lead=l;
+  buildChinaRunway();renderChinaRunwayTable();
+}
+
+function renderChinaRunwayTable(){
+  const q=(document.getElementById('crw-search')?.value||'').toLowerCase();
+  const filt=document.getElementById('crw-filter')?.value||'';
+  const cat=document.getElementById('crw-cat')?.value||'';
+  let data=chinaRunwayData.filter(r=>{
+    const ms=!q||r.sku.toLowerCase().includes(q)||r.itemName.toLowerCase().includes(q);
+    const mf=!filt||(filt==='order'&&r.orderQty>0)||r.urgency===filt;
+    const mc=!cat||r.category===cat;
+    return ms&&mf&&mc;
+  });
+  const tbody=document.getElementById('crw-tbody');if(!tbody) return;
+  if(!chinaStock.length){
+    tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:40px;color:#ccc"><div style="font-size:32px;margin-bottom:8px">📤</div>Upload tab mein data upload karo pehle.</td></tr>`;
+    return;
+  }
+  if(!data.length){
+    tbody.innerHTML=`<tr><td colspan="13" style="text-align:center;padding:24px;color:#ccc">Koi item nahi mila filter ke saath</td></tr>`;
+    return;
+  }
+  const urgMap={critical:'🔴 Critical',urgent:'🟠 Urgent',warning:'🟡 Warning',safe:'🟢 Safe',nodata:'—'};
+  const urgColor={critical:'#e74c3c',urgent:'#d35400',warning:'#b7950b',safe:'#1e8449',nodata:'#aaa'};
+  const urgBg={critical:'#fdecea',urgent:'#fdf2e9',warning:'#fefde6',safe:'#e9f7ef',nodata:'#f5f5f5'};
+  tbody.innerHTML=data.map(r=>`<tr>
+    <td><input type="checkbox" class="crw-chk" value="${r.sku}"/></td>
+    <td style="font-weight:700;color:#6c3fc5;font-size:12px">${r.sku}</td>
+    <td style="font-weight:600">${r.itemName}</td>
+    <td style="font-size:12px;color:#888">${r.category}</td>
+    <td style="text-align:center;font-weight:700;color:${r.qty===0?'#e74c3c':r.urgency==='critical'?'#e74c3c':r.urgency==='urgent'?'#e67e22':'#222'}">${r.qty} <span style="font-size:11px;color:#aaa">${r.unit}</span></td>
+    <td style="text-align:center">${r.avgM||'—'}</td>
+    <td style="text-align:center;font-size:12px;color:#888">${r.avgM>0?r.dailyAvg:'—'}</td>
+    <td style="text-align:center;font-weight:700;color:${r.daysLeft!==null&&r.daysLeft<=15?'#e74c3c':r.daysLeft!==null&&r.daysLeft<=30?'#e67e22':'#222'}">${r.daysLeft!==null?r.daysLeft+' d':'—'}</td>
+    <td style="text-align:center;color:#6c3fc5;font-weight:600">${r.targetStock} <span style="font-size:11px;color:#aaa">${r.unit}</span></td>
+    <td style="text-align:center;font-size:12px;color:#888">${r.avgM>0?r.leadBuffer+' '+r.unit:'—'}</td>
+    <td style="text-align:center">
+      ${r.orderQty>0?`<span style="background:#6c3fc5;color:#fff;padding:4px 12px;border-radius:8px;font-weight:700;font-size:13px">${r.orderQty} ${r.unit}</span>`:`<span style="color:#27ae60;font-weight:600">✅ OK</span>`}
+    </td>
+    <td style="text-align:center"><span style="background:${urgBg[r.urgency]};color:${urgColor[r.urgency]};padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap">${urgMap[r.urgency]}</span></td>
+    <td>${r.orderQty>0?`<button class="btn btn-sm btn-primary" onclick="quickChinaOrder('${r.sku}','${r.itemName}',${r.orderQty},'${r.unit}','${r.category}')">+ Order</button>`:''}</td>
   </tr>`).join('');
 }
 
-function handleChinaDrop(e){e.preventDefault();document.getElementById('china-drop').classList.remove('drag');handleChinaCSV(e.dataTransfer.files[0]);}
+function toggleChinaAll(el){document.querySelectorAll('.crw-chk').forEach(c=>c.checked=el.checked);}
 
-async function handleChinaCSV(file){
+function chinaBulkCreateOrders(){
+  const checked=[...document.querySelectorAll('.crw-chk:checked')].map(c=>c.value);
+  if(!checked.length){alert('Pehle items select karo (checkbox)');return;}
+  const toOrder=chinaRunwayData.filter(r=>checked.includes(r.sku)&&r.orderQty>0);
+  if(!toOrder.length){alert('Selected items mein order needed nahi hai');return;}
+  if(!confirm(`${toOrder.length} items ke liye purchase orders create karein?`)) return;
+  Promise.all(toOrder.map(r=>createChinaOrderDirect(r))).then(()=>loadAll()).then(()=>{
+    alert(`✅ ${toOrder.length} orders created!`);
+    switchChinaTab('orders');
+  });
+}
+
+async function createChinaOrderDirect(r){
+  const today=new Date().toISOString().slice(0,10);
+  const eta=new Date(Date.now()+chinaCfg.lead*86400000).toISOString().slice(0,10);
+  await sb.from('china_plan').insert({
+    sku:r.sku,item_name:r.itemName,supplier:chinaCfg.defaultSupplier||'TBD',
+    qty_needed:r.orderQty,estimated_cost:0,delivery_date:eta,status:'Pending'
+  });
+  await logActivity('China PO Created','China',`${r.sku} — Qty: ${r.orderQty} — Auto from runway`);
+}
+
+function quickChinaOrder(sku,name,qty,unit,cat){
+  switchChinaTab('orders');
+  setTimeout(()=>openChinaOrderModal(null,{sku,name,qty,unit,cat}),100);
+}
+
+function exportChinaRunwayCSV(){
+  const hdr='SKU,Item Name,Category,Unit,Current Stock,Avg Monthly,Daily Avg,Days Left,Target Stock,Lead Buffer,Order Qty,Priority';
+  const rows=chinaRunwayData.map(r=>[r.sku,r.itemName,r.category,r.unit,r.qty,r.avgM,r.dailyAvg,r.daysLeft||'',r.targetStock,r.leadBuffer,r.orderQty,r.urgency].map(v=>`"${v}"`).join(','));
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(hdr+'\n'+rows.join('\n'));
+  a.download='china_runway_export.csv';a.click();
+}
+
+// ── CHINA UPLOAD ──────────────────────────────────────
+function handleChinaDrop(e,type){
+  e.preventDefault();
+  document.getElementById('china-drop-'+type)?.classList.remove('drag');
+  const file=e.dataTransfer.files[0];if(file) handleChinaCSV(file,type);
+}
+
+async function handleChinaCSV(file,type){
   if(!file) return;
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete: async res=>{
-    const payload=[];
-    const data={};
-    res.data.forEach(r=>{
-      const sku=String(r.sku||r.SKU||'').trim().toUpperCase();if(!sku) return;
-      const qty=Number(r.qty||r.QTY||0);
-      const ms={};Object.keys(r).forEach(k=>{if(/^\d{4}-\d{2}$/.test(k.trim())&&r[k]!=='') ms[k.trim()]=Number(r[k])||0;});
-      data[sku]={qty,monthly_sales:JSON.stringify(ms),item_name:'',updated_at:new Date().toISOString()};
-    });
-    Object.entries(data).forEach(([sku,v])=>payload.push({sku,...v}));
-    const{error}=await sb.from('china_stock').upsert(payload,{onConflict:'sku'});
-    if(error){document.getElementById('china-stock-msg').innerHTML='<span style="color:#c0392b">Error: '+error.message+'</span>';return;}
-    await logActivity('China Upload','China',`${payload.length} SKUs`);
-    document.getElementById('china-stock-msg').innerHTML='<span style="color:#27ae60">✅ '+payload.length+' SKUs uploaded!</span>';
-    await loadAll();renderChinaPage();
+  Papa.parse(file,{header:true,skipEmptyLines:true,dynamicTyping:true,complete: async res=>{
+    const rows=res.data;
+    showChinaUploadPreview(rows,type);
   }});
+}
+
+function showChinaUploadPreview(rows,type){
+  const prev=document.getElementById('china-upload-preview');
+  if(!rows.length){prev.innerHTML='<div class="alert alert-danger">Koi data nahi mila.</div>';return;}
+  prev.innerHTML=`<div class="card">
+    <div class="card-title">Preview — ${rows.length} rows
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" id="china-import-btn">✅ Import ${rows.length} Records</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('china-upload-preview').innerHTML=''">Cancel</button>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="max-height:220px;overflow-y:auto"><table>
+      <thead><tr>${Object.keys(rows[0]).slice(0,7).map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+      <tbody>${rows.slice(0,8).map(r=>`<tr>${Object.values(r).slice(0,7).map(v=>`<td>${v||''}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>
+    ${rows.length>8?`<div style="font-size:12px;color:#aaa;padding:8px">...aur ${rows.length-8} rows</div>`:''}
+  </div>`;
+  document.getElementById('china-import-btn').onclick=()=>importChinaData(rows,type);
+}
+
+async function importChinaData(rows,type){
+  const btn=document.getElementById('china-import-btn');
+  if(btn){btn.textContent='⏳ Importing...';btn.disabled=true;}
+  const dataMap={};
+  rows.forEach(r=>{
+    const sku=String(r.sku||r.SKU||'').trim().toUpperCase();if(!sku) return;
+    const ms={};Object.keys(r).forEach(k=>{if(/^\d{4}-\d{2}$/.test(k.trim())&&r[k]!==null&&r[k]!==undefined&&r[k]!=='') ms[k.trim()]=Number(r[k])||0;});
+    if(!dataMap[sku]) dataMap[sku]={sku,item_name:String(r.item_name||r.name||'').trim()||sku,category:String(r.category||'').trim()||'-',unit:String(r.unit||'pcs').trim(),qty:0,monthly_sales:'{}',updated_at:new Date().toISOString()};
+    if(type!=='sales') dataMap[sku].qty=Number(r.qty||r.QTY||r.stock||0)||0;
+    const existMs=JSON.parse(dataMap[sku].monthly_sales||'{}');
+    Object.assign(existMs,ms);
+    dataMap[sku].monthly_sales=JSON.stringify(existMs);
+  });
+  // If sales only, preserve existing qty
+  if(type==='sales'){
+    Object.keys(dataMap).forEach(sku=>{
+      const existing=chinaStock.find(s=>s.sku===sku);
+      dataMap[sku].qty=existing?existing.qty:0;
+    });
+  }
+  const payload=Object.values(dataMap);
+  const batches=[];for(let i=0;i<payload.length;i+=50) batches.push(payload.slice(i,i+50));
+  let ok=0,err=0;
+  for(const batch of batches){
+    const{error}=await sb.from('china_stock').upsert(batch,{onConflict:'sku'});
+    if(error) err+=batch.length; else ok+=batch.length;
+  }
+  await logActivity('China Upload','China',`Type: ${type} — ${ok} SKUs`);
+  document.getElementById('china-upload-preview').innerHTML=`<div class="alert alert-success">✅ ${ok} SKUs imported! ${err>0?`(${err} errors)`:''}</div>`;
+  await loadAll();renderChinaPage();
+}
+
+function renderChinaUploadStatus(){
+  if(!chinaStock.length) return '';
+  const withSales=chinaStock.filter(s=>{try{return Object.keys(JSON.parse(s.monthly_sales||'{}')).length>0}catch(e){return false;}}).length;
+  return `<div class="card"><div class="card-title">Uploaded Data Status</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div style="background:#f5f0ff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#6c3fc5">${chinaStock.length}</div><div style="font-size:12px;color:#888">Total SKUs</div></div>
+      <div style="background:#e9f7ef;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#27ae60">${withSales}</div><div style="font-size:12px;color:#888">With Sales Data</div></div>
+      <div style="background:#eaf4fb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#2980b9">${chinaStock.length-withSales}</div><div style="font-size:12px;color:#888">Stock Only</div></div>
+    </div></div>`;
+}
+
+function renderChinaUploadStatusEl(){
+  const el=document.getElementById('china-upload-status');if(!el) return;
+  if(!chinaStock.length){el.innerHTML='<div style="color:#aaa;font-size:13px">Koi data nahi abhi tak.</div>';return;}
+  const withSales=chinaStock.filter(s=>{try{return Object.keys(JSON.parse(s.monthly_sales||'{}')).length>0}catch(e){return false;}}).length;
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    <div style="background:#f5f0ff;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#6c3fc5">${chinaStock.length}</div><div style="font-size:12px;color:#888">Total SKUs</div></div>
+    <div style="background:#e9f7ef;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#27ae60">${withSales}</div><div style="font-size:12px;color:#888">With Sales Data</div></div>
+    <div style="background:#eaf4fb;border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:700;color:#2980b9">${chinaStock.length-withSales}</div><div style="font-size:12px;color:#888">Stock Only</div></div>
+  </div>`;
+}
+
+function downloadChinaSampleNew(type){
+  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
+  let csv='';
+  if(type==='combined') csv=`sku,item_name,category,qty,unit,${months.join(',')}\nFAB-001,Cotton Fabric,Fabric,150,meters,80,90,85,95,100,110\nACC-001,Metal Buttons,Accessories,800,pcs,200,180,220,190,210,230`;
+  else if(type==='stock') csv=`sku,item_name,category,qty,unit\nFAB-001,Cotton Fabric,Fabric,150,meters\nACC-001,Metal Buttons,Accessories,800,pcs`;
+  else csv=`sku,${months.join(',')}\nFAB-001,80,90,85,95,100,110\nACC-001,200,180,220,190,210,230`;
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`china_${type}_sample.csv`;a.click();
 }
 
 async function clearChinaData(){
@@ -1528,33 +1870,214 @@ async function clearChinaData(){
   await loadAll();renderChinaPage();
 }
 
-function downloadChinaSample(){
-  const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7));}
-  const csv=`sku,qty,${months.join(',')}\nFAB-001,120,40,45,50,55,60,65\nACC-001,80,20,22,18,25,23,24`;
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='china_stock_sample.csv';a.click();
+// ── CHINA PURCHASE ORDERS ─────────────────────────────
+function renderChinaOrdersSummary(){
+  const statuses=['Pending','Confirmed','Ordered','Shipped','Received','Cancelled'];
+  const colors={Pending:'#e67e22',Confirmed:'#2980b9',Ordered:'#6c3fc5',Shipped:'#f39c12',Received:'#27ae60',Cancelled:'#e74c3c'};
+  const el=document.getElementById('china-order-summary');if(!el) return;
+  el.innerHTML=statuses.map(s=>{
+    const cnt=(chinaPlan||[]).filter(o=>o.status===s).length;
+    return`<div class="metric" style="border-top:3px solid ${colors[s]}"><div class="metric-label" style="font-size:10px">${s}</div><div class="metric-value" style="font-size:20px;color:${colors[s]}">${cnt}</div></div>`;
+  }).join('');
 }
 
-async function saveChinaPlan(){
-  const item=document.getElementById('cp-item').value.trim();
-  if(!item){document.getElementById('china-plan-msg').textContent='SKU zaroori hai';return;}
-  const{error}=await sb.from('china_plan').insert({sku:item.toUpperCase(),item_name:item,supplier:document.getElementById('cp-supplier').value.trim(),qty_needed:Number(document.getElementById('cp-qty').value)||0,estimated_cost:Number(document.getElementById('cp-cost').value)||0,delivery_date:document.getElementById('cp-date').value||null,status:document.getElementById('cp-status').value});
-  if(error){document.getElementById('china-plan-msg').textContent='Error: '+error.message;return;}
-  await logActivity('China Plan','China',`Added: ${item}`);
-  document.getElementById('china-plan-msg').textContent='✅ Saved!';
-  ['cp-item','cp-supplier','cp-qty','cp-cost','cp-date'].forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
-  await loadAll();renderChinaPage();
+function renderChinaOrdersTable(){
+  const q=(document.getElementById('cord-search')?.value||'').toLowerCase();
+  const sf=document.getElementById('cord-status')?.value||'';
+  const list=(chinaPlan||[]).filter(o=>{
+    const ms=!q||(o.item_name||'').toLowerCase().includes(q)||(o.sku||'').toLowerCase().includes(q)||(o.supplier||'').toLowerCase().includes(q);
+    const mf=!sf||o.status===sf;
+    return ms&&mf;
+  });
+  const el=document.getElementById('china-orders-list');if(!el) return;
+  const statusFlow={Pending:'Confirmed',Confirmed:'Ordered',Ordered:'Shipped',Shipped:'Received'};
+  const statusColors={Pending:'#e67e22',Confirmed:'#2980b9',Ordered:'#6c3fc5',Shipped:'#f39c12',Received:'#27ae60',Cancelled:'#e74c3c'};
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#ccc">Koi orders nahi — <button class="btn btn-primary btn-sm" onclick="openChinaOrderModal(null)">+ Create Order</button></div>';return;}
+  el.innerHTML=list.map(o=>{
+    const today=new Date();
+    const eta=o.delivery_date?new Date(o.delivery_date):null;
+    const daysLeft=eta?Math.ceil((eta-today)/86400000):null;
+    const isLate=daysLeft!==null&&daysLeft<0&&o.status!=='Received'&&o.status!=='Cancelled';
+    const next=statusFlow[o.status];
+    return`<div class="card" style="margin-bottom:10px;border-left:4px solid ${isLate?'#e74c3c':(statusColors[o.status]||'#6c3fc5')}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-weight:800;font-size:14px;color:#1a1a2e">${o.sku||'—'}</span>
+            <span style="background:${statusColors[o.status]||'#888'}22;color:${statusColors[o.status]||'#888'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">${o.status}</span>
+            ${isLate?'<span style="background:#fdecea;color:#c0392b;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">⚠️ OVERDUE</span>':''}
+          </div>
+          <div style="font-weight:600;font-size:13px">${o.item_name||'-'}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">Supplier: ${o.supplier||'-'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:800;color:#6c3fc5">${o.qty_needed} units</div>
+          ${o.estimated_cost>0?`<div style="font-size:12px;color:#888">₹${Number(o.estimated_cost).toLocaleString('en-IN')}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#888;flex-wrap:wrap">
+        ${o.delivery_date?`<span>🗓️ ETA: <b style="color:${isLate?'#e74c3c':daysLeft&&daysLeft<=7?'#e67e22':'#333'}">${o.delivery_date}</b>${daysLeft!==null&&o.status!=='Received'?` (${daysLeft<0?Math.abs(daysLeft)+' days overdue':daysLeft+' days left'})`:''}</span>`:''}
+      </div>
+      <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+        ${next?`<button class="btn btn-sm btn-success" onclick="updateChinaOrderStatus(${o.id},'${next}')">→ Mark ${next}</button>`:''}
+        <button class="btn btn-sm btn-secondary" onclick="openChinaOrderModal(${o.id})">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteChinaOrder(${o.id})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-async function delChinaPlan(id){
+async function updateChinaOrderStatus(id,status){
+  const updates={status};
+  if(status==='Received') updates.delivery_date=new Date().toISOString().slice(0,10);
+  await sb.from('china_plan').update(updates).eq('id',id);
+  // If received, update china_stock qty
+  if(status==='Received'){
+    const order=(chinaPlan||[]).find(o=>o.id===id);
+    if(order?.sku){
+      const stockRec=chinaStock.find(s=>s.sku===order.sku.toUpperCase());
+      if(stockRec){
+        const newQty=Number(stockRec.qty)+Number(order.qty_needed);
+        await sb.from('china_stock').update({qty:newQty,updated_at:new Date().toISOString()}).eq('sku',order.sku.toUpperCase());
+      }
+    }
+  }
+  await logActivity('China PO Status','China',`ID ${id} → ${status}`);
+  await loadAll();renderChinaPage();switchChinaTab('orders');
+}
+
+async function deleteChinaOrder(id){
+  if(!confirm('Delete this order?')) return;
   await sb.from('china_plan').delete().eq('id',id);
-  await loadAll();renderChinaPage();
+  await loadAll();renderChinaPage();switchChinaTab('orders');
+}
+
+function exportChinaOrders(){
+  const hdr='SKU,Item Name,Supplier,Qty,Cost,Delivery Date,Status';
+  const rows=(chinaPlan||[]).map(o=>[o.sku,o.item_name,o.supplier,o.qty_needed,o.estimated_cost,o.delivery_date||'',o.status].map(v=>`"${v||''}"`).join(','));
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(hdr+'\n'+rows.join('\n'));
+  a.download='china_orders.csv';a.click();
+}
+
+function openChinaOrderModal(id,prefill){
+  editingOrderId=id;
+  const order=id?(chinaPlan||[]).find(o=>o.id===id):null;
+  const today=new Date().toISOString().slice(0,10);
+  const eta=new Date(Date.now()+chinaCfg.lead*86400000).toISOString().slice(0,10);
+  document.getElementById('china-order-modal-title').textContent=id?'Edit Purchase Order':'New Purchase Order';
+  document.getElementById('com-ref').value=order?.sku||prefill?.sku||'';
+  document.getElementById('com-sku').value=order?.sku||prefill?.sku||'';
+  document.getElementById('com-name').value=order?.item_name||prefill?.name||'';
+  document.getElementById('com-cat').value=order?.category||prefill?.cat||'';
+  document.getElementById('com-supplier').value=order?.supplier||chinaCfg.defaultSupplier||'';
+  document.getElementById('com-unit').value=prefill?.unit||'pcs';
+  document.getElementById('com-qty').value=order?.qty_needed||prefill?.qty||0;
+  document.getElementById('com-cost').value=order?.estimated_cost||0;
+  document.getElementById('com-currency').value=chinaCfg.currency||'CNY';
+  document.getElementById('com-total').value=order?.estimated_cost||0;
+  document.getElementById('com-odate').value=today;
+  document.getElementById('com-edate').value=order?.delivery_date||eta;
+  document.getElementById('com-status').value=order?.status||'Pending';
+  document.getElementById('com-notes').value='';
+  document.getElementById('com-err').textContent='';
+  document.getElementById('china-order-modal').style.display='flex';
+}
+
+function closeChinaOrderModal(){document.getElementById('china-order-modal').style.display='none';}
+
+function calcChinaOrderTotal(){
+  const qty=Number(document.getElementById('com-qty')?.value)||0;
+  const cost=Number(document.getElementById('com-cost')?.value)||0;
+  const el=document.getElementById('com-total');if(el) el.value=(qty*cost).toFixed(2);
+}
+
+async function saveChinaOrder(){
+  const sku=document.getElementById('com-sku').value.trim().toUpperCase();
+  const name=document.getElementById('com-name').value.trim();
+  const supplier=document.getElementById('com-supplier').value.trim();
+  const qty=Number(document.getElementById('com-qty').value)||0;
+  const errEl=document.getElementById('com-err');errEl.textContent='';
+  if(!sku||!name||!supplier){errEl.textContent='❌ SKU, Name aur Supplier required!';return;}
+  if(qty<=0){errEl.textContent='❌ Qty 0 se zyada honi chahiye!';return;}
+  const cost=Number(document.getElementById('com-cost').value)||0;
+  const data={sku,item_name:name,supplier,qty_needed:qty,estimated_cost:qty*cost,delivery_date:document.getElementById('com-edate').value||null,status:document.getElementById('com-status').value};
+  let error;
+  if(editingOrderId){({error}=await sb.from('china_plan').update(data).eq('id',editingOrderId));}
+  else{({error}=await sb.from('china_plan').insert(data));}
+  if(error){errEl.textContent='❌ Error: '+error.message;return;}
+  await logActivity(editingOrderId?'China PO Updated':'China PO Created','China',`${sku} — Qty: ${qty}`);
+  closeChinaOrderModal();await loadAll();renderChinaPage();switchChinaTab('orders');
+}
+
+// ── CHINA TRACKER ─────────────────────────────────────
+function renderChinaTracker(){
+  const active=(chinaPlan||[]).filter(o=>!['Received','Cancelled'].includes(o.status));
+  const el=document.getElementById('china-tracker-content');if(!el) return;
+  if(!active.length){
+    el.innerHTML=`<div style="text-align:center;padding:60px;color:#ccc"><div style="font-size:48px;margin-bottom:16px">🚢</div><div style="font-size:15px">Koi active shipment nahi</div><button class="btn btn-primary" style="margin-top:16px" onclick="switchChinaTab('orders');setTimeout(()=>openChinaOrderModal(null),100)">+ Create Order</button></div>`;
+    return;
+  }
+  const stages=['Pending','Confirmed','Ordered','Shipped','Received'];
+  const statusFlow={Pending:'Confirmed',Confirmed:'Ordered',Ordered:'Shipped',Shipped:'Received'};
+  el.innerHTML=active.map(o=>{
+    const curIdx=stages.indexOf(o.status);
+    const today=new Date();
+    const eta=o.delivery_date?new Date(o.delivery_date):null;
+    const daysLeft=eta?Math.ceil((eta-today)/86400000):null;
+    const next=statusFlow[o.status];
+    return`<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div>
+          <span style="font-weight:800;font-size:15px">${o.sku}</span>
+          <span style="margin-left:10px;font-size:13px;color:#666">${o.item_name}</span>
+          ${o.supplier?`<span style="margin-left:8px;font-size:11px;background:#f0eaf9;color:#6c3fc5;padding:2px 8px;border-radius:10px">📦 ${o.supplier}</span>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700;color:#6c3fc5">${o.qty_needed} units</div>
+          ${daysLeft!==null?`<div style="font-size:12px;font-weight:600;color:${daysLeft<0?'#e74c3c':daysLeft<=7?'#e67e22':'#27ae60'}">
+            ${daysLeft<0?`⚠️ ${Math.abs(daysLeft)}d overdue`:daysLeft===0?'📦 Due today!':daysLeft<=7?`🚨 ${daysLeft}d left`:`🗓️ ${daysLeft} days to ETA`}
+          </div>`:''}
+        </div>
+      </div>
+      <!-- Progress Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;padding:0 14px">
+        <div style="position:absolute;top:14px;left:14px;right:14px;height:3px;background:#e0d8f0;z-index:0"></div>
+        <div style="position:absolute;top:14px;left:14px;height:3px;background:#6c3fc5;z-index:1;width:${Math.max(0,Math.min(100,curIdx/4*100))}%;transition:width 0.5s"></div>
+        ${stages.map((s,i)=>`
+          <div style="display:flex;flex-direction:column;align-items:center;z-index:2">
+            <div style="width:28px;height:28px;border-radius:50%;border:3px solid ${i<=curIdx?'#6c3fc5':'#e0d8f0'};background:${i<curIdx?'#6c3fc5':'#fff'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${i<=curIdx?'#6c3fc5':'#ccc'}">${i<curIdx?'✓':i+1}</div>
+            <div style="font-size:10px;margin-top:4px;color:${i<=curIdx?'#6c3fc5':'#ccc'};font-weight:${i===curIdx?700:400};white-space:nowrap">${s}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${next?`<button class="btn btn-sm btn-success" onclick="updateChinaOrderStatus(${o.id},'${next}')">→ Mark ${next}</button>`:''}
+        <button class="btn btn-sm btn-secondary" onclick="openChinaOrderModal(${o.id})">✏️ Edit</button>
+        ${o.delivery_date?`<span style="font-size:12px;color:#888;display:flex;align-items:center">📅 ETA: ${o.delivery_date}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHINA SETTINGS ────────────────────────────────────
+function saveChinaSettings(){
+  chinaCfg.bench=parseInt(document.getElementById('cpst-bench')?.value)||3;
+  chinaCfg.lead=parseInt(document.getElementById('cpst-lead')?.value)||45;
+  chinaCfg.buffer=parseInt(document.getElementById('cpst-buffer')?.value)||10;
+  chinaCfg.currency=document.getElementById('cpst-currency')?.value||'CNY';
+  chinaCfg.defaultSupplier=document.getElementById('cpst-supplier')?.value.trim()||'';
+  localStorage.setItem('cp_bench',chinaCfg.bench);localStorage.setItem('cp_lead',chinaCfg.lead);
+  localStorage.setItem('cp_buffer',chinaCfg.buffer);localStorage.setItem('cp_currency',chinaCfg.currency);
+  localStorage.setItem('cp_supplier',chinaCfg.defaultSupplier);
+  const msg=document.getElementById('cpst-msg');if(msg){msg.textContent='✅ Settings saved!';setTimeout(()=>msg.textContent='',3000);}
+  buildChinaRunway();renderChinaPage();
 }
 
 function getPriorityBadge(u){
   if(u==='critical') return '<span style="background:#fdecea;color:#c0392b;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🔴 Critical</span>';
   if(u==='urgent') return '<span style="background:#fdf2e9;color:#d35400;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟠 Urgent</span>';
   if(u==='warning') return '<span style="background:#fefde6;color:#b7950b;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟡 Warning</span>';
-  if(u==='ok') return '<span style="background:#e9f7ef;color:#1e8449;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟢 Safe</span>';
+  if(u==='safe'||u==='ok') return '<span style="background:#e9f7ef;color:#1e8449;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:700">🟢 Safe</span>';
   return '<span style="background:#f5f5f5;color:#aaa;padding:3px 8px;border-radius:10px;font-size:11px">—</span>';
 }
 
